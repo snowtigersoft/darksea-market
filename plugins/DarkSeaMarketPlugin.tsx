@@ -4,7 +4,7 @@ import { App } from "./views/App";
 import { utils } from "ethers";
 import { getMarketContract, getAllArtifacts } from "./helpers/helpers";
 
-class DarkSaeMarketPlugin {
+class DarkSeaMarketPlugin {
     constructor() {
         //@ts-expect-error
         this.root = null;
@@ -39,4 +39,4 @@ class DarkSaeMarketPlugin {
     }
 }
 
-export default DarkSaeMarketPlugin;
+export default DarkSeaMarketPlugin;
