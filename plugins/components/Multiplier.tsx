@@ -15,7 +15,7 @@ function calcBonus(bonus) {
     return bonus - 100
 }
 
-export const Multiplier = ({ Icon, bonus }) => {
+export const Multiplier = ({ bonus }) => {
     let diff = calcBonus(bonus);
     let style = {
         marginLeft: '5px',
@@ -24,5 +24,5 @@ export const Multiplier = ({ Icon, bonus }) => {
         minWidth: '32px',
     };
     let text = diff === -101 ? '-' : diff < 0 ? `${diff}%` : `+${diff}%`
-    return (<span style={style}><Icon color={style.color}/>{text}</span>)
+    return (<span style={style}>{text}</span>)
 }

@@ -93,11 +93,11 @@ export function InventoryPane({ selected, artifacts, contract, fee , minPrice })
         return (
             <tr key={artifact.id} style={table}>
                 <td><Rarity rarity={artifact.rarity} type={artifact.artifactType}/></td>
-                <td><Multiplier Icon={EnergyIcon} bonus={artifact.upgrade.energyCapMultiplier} /></td>
-                <td><Multiplier Icon={EnergyGrowthIcon} bonus={artifact.upgrade.energyGroMultiplier} /></td>
-                <td><Multiplier Icon={DefenseIcon} bonus={artifact.upgrade.defMultiplier} /></td>
-                <td><Multiplier Icon={RangeIcon} bonus={artifact.upgrade.rangeMultiplier} /></td>
-                <td><Multiplier Icon={SpeedIcon} bonus={artifact.upgrade.speedMultiplier} /></td>
+                <td><Multiplier bonus={artifact.upgrade.energyCapMultiplier} /></td>
+                <td><Multiplier bonus={artifact.upgrade.energyGroMultiplier} /></td>
+                <td><Multiplier bonus={artifact.upgrade.defMultiplier} /></td>
+                <td><Multiplier bonus={artifact.upgrade.rangeMultiplier} /></td>
+                <td><Multiplier bonus={artifact.upgrade.speedMultiplier} /></td>
                 <td><ListButton artifact={artifact} contract={contract} minPrice={minPrice}/></td>
             </tr>
         )
@@ -107,8 +107,20 @@ export function InventoryPane({ selected, artifacts, contract, fee , minPrice })
 
     return (<div style={listStyle}>
         <div style={textCenter}>
-            <span style={warning}>Beware:</span> {`Darksea will charge a ${fee}% fee !`}
+            <span style={warning}>Beware:</span> {`Darksea will charge a ${fee}% fee!`} <br/> 
+            <span>20% of the fee will donated to DarkForest via Gitcoin</span>
         </div>
-        {artifactChildren.length ? <table>{artifactChildren}</table> : <div style={textCenter}>No artifacts right now.</div>}
+        {artifactChildren.length ?
+            <table style={table}>
+                <tr>
+                    <th>Type</th>
+                    <th><EnergyIcon/></th>
+                    <th><EnergyGrowthIcon/></th>
+                    <th><DefenseIcon/></th>
+                    <th><RangeIcon/></th>
+                    <th><SpeedIcon/></th>
+                    <th>Price</th>
+                </tr>{artifactChildren}
+            </table> : <div style={textCenter}>No artifacts right now.</div>}
     </div>)
 }

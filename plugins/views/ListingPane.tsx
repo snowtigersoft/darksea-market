@@ -15,6 +15,7 @@ import {
     RangeIcon,
     SpeedIcon,
 } from '../components/Icon';
+import { ArtifactType } from "@darkforest_eth/types";
 
 function BuyButton({item, contract}) {
     let [processing, setProcessing] = useState(false);
@@ -99,21 +100,19 @@ function ListItem({item, contract}) {
             df.contractsAPI.getArtifactById(artifactId).then((a) => {
                 setArtifact(a);
                 console.log(`[ArtifactsMarket] Loaded artifact ${artifactId} from chain`);
-                console.log(artifact);
-                console.log(a);
                 setLocalArtifact(a);
             });
         }, [setArtifact]);
     }
 
     return (
-        <tr key={artifact.id} style={table}>
+        <tr key={artifact.id}>
             <td><Rarity rarity={artifact.rarity} type={artifact.artifactType}/></td>
-            <td><Multiplier Icon={EnergyIcon} bonus={artifact.upgrade.energyCapMultiplier} /></td>
-            <td><Multiplier Icon={EnergyGrowthIcon} bonus={artifact.upgrade.energyGroMultiplier} /></td>
-            <td><Multiplier Icon={DefenseIcon} bonus={artifact.upgrade.defMultiplier} /></td>
-            <td><Multiplier Icon={RangeIcon} bonus={artifact.upgrade.rangeMultiplier} /></td>
-            <td><Multiplier Icon={SpeedIcon} bonus={artifact.upgrade.speedMultiplier} /></td>
+            <td><Multiplier bonus={artifact.upgrade.energyCapMultiplier} /></td>
+            <td><Multiplier bonus={artifact.upgrade.energyGroMultiplier} /></td>
+            <td><Multiplier bonus={artifact.upgrade.defMultiplier} /></td>
+            <td><Multiplier bonus={artifact.upgrade.rangeMultiplier} /></td>
+            <td><Multiplier bonus={artifact.upgrade.speedMultiplier} /></td>
             <td>{`${utils.formatEther(item.price)}xDai`}</td>
             <td>{item.owner.toLowerCase() == own ? 
                 <UnlistButton item={item} contract={contract}/>
@@ -141,7 +140,20 @@ export function ListingPane({selected, artifacts, contract}) {
             <div style={textCenter}>
                 <span style={warning}>Beware:</span> You will be spending actual xDai here!
             </div>
-            {artifactChildren.length ? <table>{artifactChildren}</table> : <div style={textCenter}>No artifacts listing right now.</div>}
+            {artifactChildren.length ? 
+            <table style={table}>
+                <tr>
+                    <th>Type</th>
+                    <th><EnergyIcon/></th>
+                    <th><EnergyGrowthIcon/></th>
+                    <th><DefenseIcon/></th>
+                    <th><RangeIcon/></th>
+                    <th><SpeedIcon/></th>
+                    <th>Price</th>
+                    <th></th>
+                </tr>
+                {artifactChildren}
+            </table> : <div style={textCenter}>No artifacts listing right now.</div>}
         </div>
     );
 }

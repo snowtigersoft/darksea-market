@@ -26,6 +26,7 @@ export const textCenter = {
 
 export const table = {
     lineHeight: '34px',
+    width: '100%'
 };
 
 export const inputStyle = {

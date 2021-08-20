@@ -39,13 +39,19 @@ async function checkAndApprove() {
         if (!approve) {
             console.log('[ArtifactsMarket] checking Approve');
             getTokenContract().then(async (contract) => {
-                //@ts-expect-error
-                const a = await contract.isApprovedForAll(df.getAccount(), MARKET_CONTRACT_ADDRESS);
-                if (a) {
-                    return a;
+                let a = await contract.isApprovedForAll(own, MARKET_CONTRACT_ADDRESS);
+                let retry = 1;
+                while(!a && retry <= 3) {
+                    console.log(`[ArtifactsMarket] call setApprove ${retry}`);
+                    await contract.setApprovalForAll(MARKET_CONTRACT_ADDRESS, true);
+                    a = await contract.isApprovedForAll(own, MARKET_CONTRACT_ADDRESS);
+                    retry++;
+                }
+                if (!a) {
+                    alert("[ArtifactsMarket] Set Approve Failed, please refresh the page.");
+                    reject(new Error("[ArtifactsMarket] call setApprove failed."));
                 } else {
-                    console.log('[ArtifactsMarket] call setApprove');
-                    return contract.setApprovalForAll(MARKET_CONTRACT_ADDRESS, true);    
+                    return a;
                 }
             }).then(() => {
                 window[name] = true;
