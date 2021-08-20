@@ -108,7 +108,7 @@ export function InventoryPane({ selected, artifacts, contract, fee , minPrice })
     return (<div style={listStyle}>
         <div style={textCenter}>
             <span style={warning}>Beware:</span> {`Darksea will charge a ${fee}% fee!`} <br/> 
-            <span>20% of the fee will donated to DarkForest via Gitcoin</span>
+            <span>At least 20% of the fees will be donated to Dark Forest via Gitcoin.</span>
         </div>
         {artifactChildren.length ?
             <table style={table}>
