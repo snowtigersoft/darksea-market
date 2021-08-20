@@ -10,10 +10,12 @@
     "scripts": {
         "format": "prettier --write .",
         "start": "df-plugin-dev-server --glob plugins/*.tsx --preact",
-        "build": "df-plugin-dev-server bundle --glob plugins/*.tsx --outdir=dest --preact"
+        "build": "df-plugin-dev-server bundle --glob plugins/*.tsx --outdir=/var/www/html/darksae_market/06r3 --preact"
     },
     "dependencies": {
+        "@darkforest_eth/network": "^6.5.5",
         "n": "^7.3.1",
+        "react-is": "^17.0.2",
         "yarn": "^1.22.11"
     },
     "devDependencies": {

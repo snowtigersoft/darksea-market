@@ -1,8 +1,7 @@
-import { listStyle } from "../helpers/styles";
+import { listStyle, table, textCenter, warning } from "../helpers/styles";
 import { artifactIdFromEthersBN } from "@darkforest_eth/serde";
 import { useState, useEffect } from "preact/hooks";
 import { getLocalArtifact, setLocalArtifact, getRandomActionId, callAction } from "../helpers/helpers";
-import { ArtifactTypeNames } from "@darkforest_eth/types";
 import { own, notifyManager } from "../contants";
 import { utils, BigNumber } from "ethers";
 import { Rarity } from "../components/Rarity";
@@ -17,17 +16,6 @@ import {
     SpeedIcon,
 } from '../components/Icon';
 
-const style = {
-    marginLeft: '5px',
-    marginRight: '10px',
-    minWidth: '32px',
-};
-
-const wrapper = {
-    display: 'flex',
-    marginBottom: '10px',
-};
-
 function BuyButton({item, contract}) {
     let [processing, setProcessing] = useState(false);
     let [show, setShow] = useState(true);
@@ -41,14 +29,15 @@ function BuyButton({item, contract}) {
             };
             const overrids = {
                 value: BigNumber.from(item.price).toString(),
-                gasLimit: 500000,
+                gasLimit: 5000000,
+                gasPrice: undefined,
             };
             callAction(contract, action, [BigNumber.from(item.listId)], overrids).then(()=>{
                 setShow(false);
                 setProcessing(false);
             }).catch((err) => {
                 setProcessing(false);
-                console.log(err);
+                console.error(err);
                 notifyManager.unsubmittedTxFail(action, err);
             });
         }
@@ -75,7 +64,7 @@ function UnlistButton({item, contract}) {
                 setProcessing(false);
             }).catch((err) => {
                 setProcessing(false);
-                console.log(err);
+                console.error(err);
                 notifyManager.unsubmittedTxFail(action, err);
             });
         }
@@ -118,20 +107,19 @@ function ListItem({item, contract}) {
     }
 
     return (
-        <div key={artifact.id} style={wrapper}>
-            <span style={style}>{ArtifactTypeNames[artifact.artifactType]}</span>
-            <Rarity rarity={artifact.rarity}/>
-            <Multiplier Icon={EnergyIcon} bonus={artifact.upgrade.energyCapMultiplier}/>
-            <Multiplier Icon={EnergyGrowthIcon} bonus={artifact.upgrade.energyGroMultiplier}/>
-            <Multiplier Icon={DefenseIcon} bonus={artifact.upgrade.defMultiplier}/>
-            <Multiplier Icon={RangeIcon} bonus={artifact.upgrade.rangeMultiplier}/>
-            <Multiplier Icon={SpeedIcon} bonus={artifact.upgrade.speedMultiplier}/>
-            <span style={style}>{utils.formatEther(item.price)}xDai</span>
-            ${item.owner.toLowerCase() == own ? 
+        <tr key={artifact.id} style={table}>
+            <td><Rarity rarity={artifact.rarity} type={artifact.artifactType}/></td>
+            <td><Multiplier Icon={EnergyIcon} bonus={artifact.upgrade.energyCapMultiplier} /></td>
+            <td><Multiplier Icon={EnergyGrowthIcon} bonus={artifact.upgrade.energyGroMultiplier} /></td>
+            <td><Multiplier Icon={DefenseIcon} bonus={artifact.upgrade.defMultiplier} /></td>
+            <td><Multiplier Icon={RangeIcon} bonus={artifact.upgrade.rangeMultiplier} /></td>
+            <td><Multiplier Icon={SpeedIcon} bonus={artifact.upgrade.speedMultiplier} /></td>
+            <td>{`${utils.formatEther(item.price)}xDai`}</td>
+            <td>{item.owner.toLowerCase() == own ? 
                 <UnlistButton item={item} contract={contract}/>
              : <BuyButton item={item} contract={contract}/>
-            }
-        </div>
+            }</td>
+        </tr>
     );
 }
 
@@ -142,15 +130,6 @@ export function ListingPane({selected, artifacts, contract}) {
 
     console.log("[ArtifactsMarket] Building listing");
 
-    let beware = {
-        color: "red",
-    };
-      
-    let warning = {
-        textAlign: "center",
-        marginBottom: "10px"
-    };
-
     let artifactChildren = artifacts.map(item => {
         return <ListItem item={item} contract={contract}/>;
     });
@@ -159,10 +138,10 @@ export function ListingPane({selected, artifacts, contract}) {
 
     return (
         <div style={listStyle}>
-            <div style={warning}>
-                <span style={beware}>Beware:</span> You will be spending actual xDai here!
+            <div style={textCenter}>
+                <span style={warning}>Beware:</span> You will be spending actual xDai here!
             </div>
-            ${artifactChildren.length ? artifactChildren : 'No artifacts listing right now.'}
+            {artifactChildren.length ? <table>{artifactChildren}</table> : <div style={textCenter}>No artifacts listing right now.</div>}
         </div>
     );
 }

@@ -1,5 +1,5 @@
 import { h, FunctionComponent } from "preact";
-import { ArtifactRarity, ArtifactRarityNames } from "@darkforest_eth/types";
+import { ArtifactRarity, ArtifactTypeNames, ArtifactType } from "@darkforest_eth/types";
 import { RarityColors } from "../helpers/styles";
 
 const styles = {
@@ -13,10 +13,11 @@ const styles = {
 };
 
 type Props = {
+    type: ArtifactType,
     rarity: ArtifactRarity;
 };
 
-export const Rarity: FunctionComponent<Props> = ({ rarity }) => {
+export const Rarity: FunctionComponent<Props> = ({ rarity, type }) => {
     let rarityStyle = {
         marginLeft: '5px',
         marginRight: '10px',
@@ -24,6 +25,6 @@ export const Rarity: FunctionComponent<Props> = ({ rarity }) => {
         color: RarityColors[rarity]
     }
     return (
-        <span style={rarityStyle}>{ArtifactRarityNames[rarity]}</span>
+        <span style={rarityStyle}>{ArtifactTypeNames[type]}</span>
     );
 };

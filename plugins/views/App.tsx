@@ -4,8 +4,9 @@ import { artifactIdFromEthersBN } from "@darkforest_eth/serde";
 import { ArtifactRarityNames, ArtifactTypeNames } from "@darkforest_eth/types";
 import { notify } from "../helpers/helpers";
 import { ListingPane } from "./ListingPane";
-import { MyArtifactsPane } from "./MyArtifactsPane";
-import { WithdrawPane } from "./WithdrawPane";
+import { InventoryPane } from "./InventoryPane";
+import { WithdrawButton } from "./WithdrawPane";
+import { utils } from "ethers";
 import { h } from "preact";
 
 const buttonBar = {
@@ -19,10 +20,10 @@ const activeButton = {
     color: '#000'
 }
 
-export function App({ artifacts, initBalance, fee, contract }) {
+export function App({ artifacts, initBalance, fee, minPrice, contract }) {
     console.log("[ArtifactsMarket] Starting market");
 
-    // ['listing', 'my_artifacts', 'account']
+    // ['listing', 'inventory', 'account']
     let [tab, setTab] = useState('listing');
     let [balance, setBalance] = useState(initBalance);
     let [listArtifacts, setListArtifacts] = useState(artifacts);
@@ -44,7 +45,7 @@ export function App({ artifacts, initBalance, fee, contract }) {
         if (artifact.status === 0) {
             artifacts.push(artifact);
         } else {
-            artifacts = artifacts.filter(p => p.listId !== listId);
+            artifacts = artifacts.filter(p => !p.listId.eq(listId));
         }
         setListArtifacts([...artifacts]);
         console.log(`[ArtifactsMarket] Artifact ${artifactIdFromEthersBN(artifact.tokenID)} update`);
@@ -61,10 +62,10 @@ export function App({ artifacts, initBalance, fee, contract }) {
                 notify(`Your ${rarity} ${artifactType} Listed.`);
             } else if (artifact.status === 1) {
                 notify(`Your ${rarity} ${artifactType} Unlisted.`);
-            } else if (artifact.owner === own) {
+            } else if (artifact.owner.toLowerCase() === own) {
                 notify(`Your ${rarity} ${artifactType} Sold.`);
             } else {
-                notify(`Your bought a ${rarity} ${artifactType}`);
+                notify(`You bought a ${rarity} ${artifactType}`);
             }
         }
         console.log("[ArtifactsMarket] Success");
@@ -72,7 +73,6 @@ export function App({ artifacts, initBalance, fee, contract }) {
     }
 
     useLayoutEffect(() => {
-        console.log(">>>>>>>>>>>");
         contract.on("Bought", onListingChange);
         contract.on("Listed", onListingChange);
         contract.on("Unlisted", onListingChange);
@@ -84,20 +84,17 @@ export function App({ artifacts, initBalance, fee, contract }) {
         };
     }, []);
 
-    console.log(listArtifacts);
-
     return (
         <div>
             <div style={buttonBar}>
                 <button onClick={() => setTab('listing')} style={tab === 'listing' ? activeButton : ''}>Listing</button>
-                <button onClick={() => setTab('my_artifacts')} style={tab === 'my_artifacts' ? activeButton : ''}>My Artifacts</button>
-                <button onClick={() => setTab('account')} style={tab === 'account' ? activeButton : ''}>Account</button>
+                <button onClick={() => setTab('inventory')} style={tab === 'inventory' ? activeButton : ''}>Inventory</button>
             </div>
             <div>
                 <ListingPane selected={tab === 'listing'} artifacts={listArtifacts} contract={contract} />
-                <MyArtifactsPane selected={tab === 'my_artifacts'} artifacts={listArtifacts} contract={contract} />
-                <WithdrawPane selected={tab === 'account'} balance={balance} contract={contract} fee={fee} />
+                <InventoryPane selected={tab === 'inventory'} artifacts={listArtifacts} contract={contract} fee={fee} minPrice={minPrice}/>
             </div>
+            <div>{`Balance: ${utils.formatEther(balance)}xDai `}<WithdrawButton contract={contract} disabled={balance == 0}/></div>
         </div>
     );
 }

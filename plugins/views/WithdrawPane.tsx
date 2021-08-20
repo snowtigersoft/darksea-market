@@ -5,7 +5,11 @@ import { useState } from "preact/hooks";
 import { notifyManager } from "../contants";
 import { h } from "preact";
 
-function WithdrawButton(contract) {
+export function WithdrawButton({contract, disabled}) {
+    if (disabled) {
+        return;
+    }
+
     let [processing, setProcessing] = useState(false);
 
     function withdraw() {
@@ -19,7 +23,7 @@ function WithdrawButton(contract) {
                 setProcessing(false);
             }).catch((err) => {
                 setProcessing(false);
-                console.log(err);
+                console.error(err);
                 notifyManager.unsubmittedTxFail(action, err);
             });
         }
@@ -35,6 +39,6 @@ export function WithdrawPane({selected, balance, contract, fee}) {
 
     return <div style={listStyle}>
             <div>Fee: ${fee} %</div>
-            <div>Balance: {balance} {balance > 0? <WithdrawButton contract={contract}/>:''}</div>
+            <div>Balance: {balance} <WithdrawButton contract={contract} disabled={balance == 0}/></div>
         </div>;
 }
