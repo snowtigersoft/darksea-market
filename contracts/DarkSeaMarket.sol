@@ -9,7 +9,7 @@ interface DarkForestTokens {
     function transferFrom(address from, address to, uint256 tokenID) external;
 }
 
-contract DarkSaeMarket is Ownable {
+contract DarkSeaMarket is Ownable {
     event Bought(uint256 blockNumber);
     event Listed(uint256 blockNumber);
     event Unlisted(uint256 blockNumber);

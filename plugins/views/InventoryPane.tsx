@@ -107,7 +107,7 @@ export function InventoryPane({ selected, artifacts, contract, fee , minPrice })
 
     return (<div style={listStyle}>
         <div style={textCenter}>
-            <span style={warning}>Beware:</span> {`Darksae will charge a ${fee}% fee !`}
+            <span style={warning}>Beware:</span> {`Darksea will charge a ${fee}% fee !`}
         </div>
         {artifactChildren.length ? <table>{artifactChildren}</table> : <div style={textCenter}>No artifacts right now.</div>}
     </div>)
