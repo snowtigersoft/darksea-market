@@ -2,7 +2,7 @@ import { listStyle, table, textCenter, warning } from "../helpers/styles";
 import { artifactIdFromEthersBN } from "@darkforest_eth/serde";
 import { useState, useEffect } from "preact/hooks";
 import { getLocalArtifact, setLocalArtifact, getRandomActionId, callAction, sortByKey } from "../helpers/helpers";
-import { own, notifyManager } from "../contants";
+import { own, notifyManager, MARKET_CONTRACT_ADDRESS } from "../contants";
 import { utils, BigNumber } from "ethers";
 import { Rarity } from "../components/Rarity";
 import { Multiplier } from "../components/Multiplier";
@@ -76,7 +76,7 @@ function UnlistButton({item, contract}) {
     }
 }
 
-function ListItem({item, contract}) {
+function ListItem({item, contract, artifact}) {
     const artifactId = artifactIdFromEthersBN(item.tokenID);
     const defaultArtifact = {
         id: artifactId,
@@ -91,19 +91,7 @@ function ListItem({item, contract}) {
         }
     };
     //@ts-expect-error
-    const [artifact, setArtifact] = useState(df.getArtifactWithId(artifactId) || defaultArtifact);
-
-    if (artifact.upgrade.energyCapMultiplier === -1) {
-        useEffect(() => {
-            console.log(`[ArtifactsMarket] Loading artifact ${artifactId} from chain`);
-            //@ts-expect-error
-            df.contractsAPI.getArtifactById(artifactId).then((a) => {
-                setArtifact(a);
-                console.log(`[ArtifactsMarket] Loaded artifact ${artifactId} from chain`);
-                //setLocalArtifact(a);
-            });
-        }, [setArtifact]);
-    }
+    artifact = artifact || df.getArtifactWithId(artifactId) || defaultArtifact;
 
     return (
         <tr key={artifact.id}>
@@ -127,10 +115,34 @@ export function ListingPane({selected, artifacts, contract}) {
         return
     }
 
+    const [gameArtifacts, setGameArtifacts] = useState({});
+    const fetchMarket = () =>
+        console.info("[ArtifactsMarket] Loading artifact detail");
+        //@ts-expect-error
+        df.contractsAPI
+        .getPlayerArtifacts(MARKET_CONTRACT_ADDRESS)
+        .then((afs) => {
+            let gas = {};
+            afs.forEach(a=>gas[a.id]=a);
+            setGameArtifacts(gas);
+            console.info("[ArtifactsMarket] Loading artifact detail success");
+        })
+        .catch((err) => {
+            console.error("[ArtifactsMarket] Loading artifact detail error");
+        });
+
+    useEffect(fetchMarket, []);
+
+    useEffect(() => {
+        const poll = setInterval(fetchMarket, 5000);
+        return () => clearInterval(poll);
+    }, []);
+
     console.log("[ArtifactsMarket] Building listing");
 
     let artifactChildren = artifacts.sort(sortByKey('price')).map(item => {
-        return <ListItem item={item} contract={contract}/>;
+        const artifactId = artifactIdFromEthersBN(item.tokenID);
+        return <ListItem item={item} contract={contract} artifact={gameArtifacts[artifactId]}/>;
     });
 
     console.log("[ArtifactsMarket] Build listing");
