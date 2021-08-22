@@ -7,7 +7,7 @@ export const listStyle = {
 };
 
 export const RarityColors = {
-    [ArtifactRarity.Unknown]: '#000000',
+    [ArtifactRarity.Unknown]: 'rgb(131, 131, 131)',
     [ArtifactRarity.Common]: 'rgb(131, 131, 131)',
     [ArtifactRarity.Rare]: '#6b68ff',
     [ArtifactRarity.Epic]: '#c13cff',

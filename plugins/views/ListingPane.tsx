@@ -1,12 +1,13 @@
 import { listStyle, table, textCenter, warning } from "../helpers/styles";
 import { artifactIdFromEthersBN } from "@darkforest_eth/serde";
 import { useState, useEffect } from "preact/hooks";
-import { getLocalArtifact, setLocalArtifact, getRandomActionId, callAction } from "../helpers/helpers";
+import { getLocalArtifact, setLocalArtifact, getRandomActionId, callAction, sortByKey } from "../helpers/helpers";
 import { own, notifyManager } from "../contants";
 import { utils, BigNumber } from "ethers";
 import { Rarity } from "../components/Rarity";
 import { Multiplier } from "../components/Multiplier";
 import { Button } from "../components/Button";
+import { ArtifactRarity } from "@darkforest_eth/types";
 import { h } from "preact";
 import {
     EnergyIcon,
@@ -15,7 +16,6 @@ import {
     RangeIcon,
     SpeedIcon,
 } from '../components/Icon';
-import { ArtifactType } from "@darkforest_eth/types";
 
 function BuyButton({item, contract}) {
     let [processing, setProcessing] = useState(false);
@@ -81,7 +81,7 @@ function ListItem({item, contract}) {
     const defaultArtifact = {
         id: artifactId,
         artifactType: item.artifactType,
-        rarity: item.rarity,
+        rarity: ArtifactRarity.Unknown,
         upgrade: {
             energyCapMultiplier: -1,
             energyGroMultiplier: -1,
@@ -91,7 +91,7 @@ function ListItem({item, contract}) {
         }
     };
     //@ts-expect-error
-    const [artifact, setArtifact] = useState(getLocalArtifact(artifactId) || df.getArtifactWithId(artifactId) || defaultArtifact);
+    const [artifact, setArtifact] = useState(df.getArtifactWithId(artifactId) || defaultArtifact);
 
     if (artifact.upgrade.energyCapMultiplier === -1) {
         useEffect(() => {
@@ -100,7 +100,7 @@ function ListItem({item, contract}) {
             df.contractsAPI.getArtifactById(artifactId).then((a) => {
                 setArtifact(a);
                 console.log(`[ArtifactsMarket] Loaded artifact ${artifactId} from chain`);
-                setLocalArtifact(a);
+                //setLocalArtifact(a);
             });
         }, [setArtifact]);
     }
@@ -129,7 +129,7 @@ export function ListingPane({selected, artifacts, contract}) {
 
     console.log("[ArtifactsMarket] Building listing");
 
-    let artifactChildren = artifacts.map(item => {
+    let artifactChildren = artifacts.sort(sortByKey('price')).map(item => {
         return <ListItem item={item} contract={contract}/>;
     });
 

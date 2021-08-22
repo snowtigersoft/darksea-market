@@ -126,3 +126,15 @@ export function setLocalArtifact(artifact) {
     const name = `artifact-market-${artifact.id}`;
     localStorage.setItem(name, JSON.stringify(artifact));
 }
+
+export function sortByKey(key) {
+    function doSort(n1, n2) {
+        let a = n1[key], b = n2[key];
+        if (key == "price") {
+            a = +utils.formatEther(a);
+            b = +utils.formatEther(b);
+        }
+        return a < b ? -1 : a > b ? 1 : 0;
+    }
+    return doSort;
+}

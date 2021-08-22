@@ -121,6 +121,7 @@ export function InventoryPane({ selected, artifacts, contract, fee , minPrice })
                     <th><SpeedIcon/></th>
                     <th>Price</th>
                 </tr>{artifactChildren}
-            </table> : <div style={textCenter}>No artifacts right now.</div>}
+            </table> : 
+            <div style={textCenter}>No artifacts right now. <br/>You need withdraw your artifacts from a Spacetime Rip first.</div>}
     </div>)
 }
