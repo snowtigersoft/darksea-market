@@ -1,28 +1,19 @@
-import { h } from "preact";
+import React from "react";
+import { Green, Red, Sub } from "./Text";
 
-const styles = {
-  enabled: {},
-  disabled: {
-    backgroundColor: "#a0a0a0",
-    color: "#080808",
-    border: "1px solid #080808",
-    outline: "none",
-  },
-};
-
-
-function calcBonus(bonus) {
-    return bonus - 100
+function calcMult(mult) {
+    return Math.round(mult - 100)
 }
 
-export const Multiplier = ({ bonus }) => {
-    let diff = calcBonus(bonus);
-    let style = {
-        marginLeft: '5px',
-        marginRight: '10px',
-        color: diff < 0 && diff > -101 ? 'red' : diff > 0 ? 'green' : 'rgb(131, 131, 131)',
-        minWidth: '32px',
-    };
+export const Multiplier = ({ mult }) => {
+    let diff = calcMult(mult);
     let text = diff === -101 ? '-' : diff < 0 ? `${diff}%` : `+${diff}%`
-    return (<span style={style}>{text}</span>)
+    return (
+      <span>
+          {diff === -101 && <Sub>-</Sub>}
+          {diff > 0 && <Green>{text}</Green>}
+          {diff === 0 && <Sub>+0%</Sub>}
+          {diff < 0 && <Red>{text}</Red>}
+      </span>
+    )
 }

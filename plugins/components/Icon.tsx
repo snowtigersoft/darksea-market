@@ -1,7 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
 import dfstyles from '../helpers/dfstyles';
-import { h } from "preact";
 
 const SVGWrapper = styled.span`
   width: 1em;
@@ -27,25 +26,25 @@ const SVGWrapper = styled.span`
 `;
 
 const DefaultSVG = ({
-  children,
-  width,
-  height,
+    children,
+    width,
+    height,
 }: {
-  children: React.ReactNode;
-  width?: number;
-  height?: number;
+    children: React.ReactNode;
+    width?: number;
+    height?: number;
 }) => {
-  return (
-    <svg
-      version='1.1'
-      xmlns='http://www.w3.org/2000/svg'
-      width='512'
-      height='512'
-      viewBox={`0 0 ${height || 512} ${width || 512}`}
-    >
-      {children}
-    </svg>
-  );
+    return (
+        <svg
+            version='1.1'
+            xmlns='http://www.w3.org/2000/svg'
+            width='512'
+            height='512'
+            viewBox={`0 0 ${height || 512} ${width || 512}`}
+        >
+            {children}
+        </svg>
+    );
 };
 
 
@@ -139,3 +138,27 @@ export const EnergyIcon = ({ color }: { color?: string }) => (
         <EnergySVG color={color} />
     </SVGWrapper>
 );
+
+const PriceSVG = ({ color }: { color?: string }) => (
+    <DefaultSVG>
+        <path
+            style={{ fill: color || dfstyles.colors.text }}
+            d="M212 40H40V126H212V40ZM298 40H470V126H298V40ZM126 384H212V470H126H40V384V298H126V384ZM298 384H384V298H470V384V470H384H298V384Z"
+        ></path>
+    </DefaultSVG>
+);
+
+export const PriceIcon = ({ color }: { color?: string }) => (
+    <SVGWrapper>
+        <PriceSVG color={color} />
+    </SVGWrapper>
+);
+
+export const StatIcon = ({ stat, color }: { stat: number, color?: string }) => {
+    if (stat === 4) return <DefenseIcon color={color}/>;
+    else if (stat === 1) return <EnergyGrowthIcon color={color}/>;
+    else if (stat === 0) return <EnergyIcon color={color}/>;
+    else if (stat === 2) return <RangeIcon color={color}/>;
+    else if (stat === 3) return <SpeedIcon color={color}/>;
+    else return <DefenseIcon />;
+};

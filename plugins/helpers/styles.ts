@@ -37,4 +37,13 @@ export const inputStyle = {
     border: "1px solid rgb(95, 95, 95)",
     width: 60,
     padding: "0 2px",
+    height: "1.5em",
+};
+
+export const buttonStyle = (processing=false) => {
+    return {
+        marginLeft: '5px',
+        opacity: processing ? '0.5' : '1',
+        lineHeight: "1.5em"
+    }
 };

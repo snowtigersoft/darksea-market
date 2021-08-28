@@ -1,5 +1,7 @@
 import { MARKET_CONTRACT_ADDRESS, MARKET_CONTRACT_ABI, TOKENS_CONTRACT_ADDRESS, TOKENS_APPROVAL_ABI, notifyManager, own } from "../contants";
 import { BigNumber, utils } from "ethers";
+import { _ } from "lodash";
+import { Upgrade } from "@darkforest_eth/types";
 
 export async function getMarketContract() {
     const abi = await fetch(MARKET_CONTRACT_ABI).then(res => res.json())
@@ -19,7 +21,7 @@ export async function getAllArtifacts(contract) {
 }
 
 export function notify(msg) {
-    notifyManager.notify(1, `[ArtifactsMarket] ${msg}`);
+    notifyManager.notify(1, `[DarkSeaMarket] ${msg}`);
 }
 
 export function getRandomActionId() {
@@ -37,25 +39,25 @@ async function checkAndApprove() {
         const name = `darksae-approved-${TOKENS_CONTRACT_ADDRESS}-${MARKET_CONTRACT_ADDRESS}-${own}`;
         const approve = window[name];
         if (!approve) {
-            console.log('[ArtifactsMarket] checking Approve');
+            console.log('[DarkSeaMarket] checking Approve');
             getTokenContract().then(async (contract) => {
                 let a = await contract.isApprovedForAll(own, MARKET_CONTRACT_ADDRESS);
                 let retry = 1;
                 while(!a && retry <= 3) {
-                    console.log(`[ArtifactsMarket] call setApprove ${retry}`);
+                    console.log(`[DarkSeaMarket] call setApprove ${retry}`);
                     await contract.setApprovalForAll(MARKET_CONTRACT_ADDRESS, true);
                     a = await contract.isApprovedForAll(own, MARKET_CONTRACT_ADDRESS);
                     retry++;
                 }
                 if (!a) {
-                    alert("[ArtifactsMarket] Set Approve Failed, please refresh the page.");
-                    reject(new Error("[ArtifactsMarket] call setApprove failed."));
+                    alert("[DarkSeaMarket] Set Approve Failed, please refresh the page.");
+                    reject(new Error("[DarkSeaMarket] call setApprove failed."));
                 } else {
                     return a;
                 }
             }).then(() => {
                 window[name] = true;
-                console.log('[ArtifactsMarket] Approved');
+                console.log('[DarkSeaMarket] Approved');
                 resolve(true);
             }).catch((err) => {
                 reject(err);
@@ -127,14 +129,37 @@ export function setLocalArtifact(artifact) {
     localStorage.setItem(name, JSON.stringify(artifact));
 }
 
-export function sortByKey(key) {
+export const getUpgradeStat = (upgrade: Upgrade, stat: number): number => {
+    if (stat === 0) return upgrade.energyCapMultiplier;
+    else if (stat === 1) return upgrade.energyGroMultiplier;
+    else if (stat === 2) return upgrade.rangeMultiplier;
+    else if (stat === 3) return upgrade.speedMultiplier;
+    else if (stat === 4) return upgrade.defMultiplier;
+    else return upgrade.energyCapMultiplier;
+};
+
+export function sortByKey(sorts) {
     function doSort(n1, n2) {
-        let a = n1[key], b = n2[key];
-        if (key == "price") {
-            a = +utils.formatEther(a);
-            b = +utils.formatEther(b);
+        let ret = 0;
+        for (let i=0; i<sorts.length; i++) {
+            let {key, d} = sorts[i];
+            let a, b;
+            if (key.startsWith('upgrade.') > 0) {
+                a = getUpgradeStat(n1.upgrade, +key.substr(8));
+                b = getUpgradeStat(n2.upgrade, +key.substr(8));
+            } else {
+                a = n1[key], b = n2[key];
+            }
+            if (key == "price") {
+                a = +utils.formatEther(a);
+                b = +utils.formatEther(b);
+            }
+            let ret = (a < b ? -1 : a > b ? 1 : 0) * d;
+            if (ret != 0) {
+                return ret;
+            }
         }
-        return a < b ? -1 : a > b ? 1 : 0;
+        return ret;
     }
     return doSort;
 }

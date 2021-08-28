@@ -1,5 +1,5 @@
-import { h, render } from "preact";
-
+import React from "react";
+import ReactDom from "react-dom";
 import { App } from "./views/App";
 import { utils } from "ethers";
 import { getMarketContract, getAllArtifacts } from "./helpers/helpers";
@@ -16,26 +16,27 @@ class DarkSeaMarketPlugin {
         //@ts-expect-error
         this.container = container;
 
-        container.style.width = '600px';
+        container.style.width = '550px';
 
         try {
-            const contract = await getMarketContract();
-            const artifacts = await getAllArtifacts(contract);
-            const initBalance = await contract.getMyBalance();
-            const fee = await contract.getFee();
-            const minPrice = utils.formatEther(await contract.getMinPrice());
+            const market = await getMarketContract();
+            const contract = {
+                market: await getMarketContract(),
+                fee: await market.getFee(),
+                minPrice: utils.formatEther(await market.getMinPrice())
+            };
 
             //@ts-expect-error
-            this.root = render(<App artifacts={artifacts} initBalance={initBalance} contract={contract} fee={fee} minPrice={minPrice}/>, container);
+            this.root = ReactDom.render(<App contract={contract} />, container);
         } catch (err) {
             console.error("[DFArtifactMarket] Error starting plugin:", err);
-            render(<div>{err.message}</div>, container);
+            ReactDom.render(<div>{err.message}</div>, container);
         }
     }
 
     destroy() {
         //@ts-expect-error
-        render(null, this.container, this.root);
+        ReactDom.render(null, this.container, this.root);
     }
 }
 
