@@ -77,9 +77,10 @@ export function useMyArtifactsList() {
 
 export function useListingArtifacts(market, poll: number | undefined = undefined) {
     //const { market } = useContract();
-    const [listingArtifacts, setListingArtifacts] = useState<Wrapper<ListingArtifact[]>>([]);
+    const [listingArtifacts, setListingArtifacts] = useState<Wrapper<ListingArtifact[]>>(new Wrapper([]));
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | undefined>();
+    const [lastRefreshTime, setLastRefreshTime] = useState(new Date().getTime());
 
     function buildArfifact({item, artifact=undefined}) {
         const artifactId = artifactIdFromEthersBN(item.tokenID);
@@ -119,13 +120,9 @@ export function useListingArtifacts(market, poll: number | undefined = undefined
         console.log("[DarkSeaMarket] On listing change");
         const item = await market.getArtifact(listId);
         const artifact = buildArfifact({item: item});
-        let artifacts = listingArtifacts.value || [];
-        if (artifact.status === 0) {
-            artifacts.push(artifact);
-        } else {
-            artifacts = artifacts.filter(p => !p.listId.eq(listId));
+        if (new Date().getTime() - lastRefreshTime > 1000) {
+            load();
         }
-        setListingArtifacts(new Wrapper(artifacts));
         console.log(`[DarkSeaMarket] Artifact ${artifact.id} update`);
         if (artifact.owner === own || artifact.buyer === own) {
             console.log(`[DarkSeaMarket] Update local game`)
@@ -152,10 +149,8 @@ export function useListingArtifacts(market, poll: number | undefined = undefined
     const load = useCallback(async function load() {
         try {
             console.log("[DarkSeaMarket] Loading listing artifacts");
-            let artifacts = listingArtifacts.value || [];
-            if (artifacts.length === 0) {
-                artifacts = await getAllArtifacts(market);
-            }
+            setLastRefreshTime(new Date().getTime());
+            let artifacts = await getAllArtifacts(market);
             //@ts-expect-error
             const afs = await df.contractsAPI.getPlayerArtifacts(MARKET_CONTRACT_ADDRESS);
             const gas = {};
@@ -183,7 +178,7 @@ export function useListingArtifacts(market, poll: number | undefined = undefined
         };
     }, [listingArtifacts]);
     
-    usePoll(load, poll, true);
+    usePoll(load, poll, listingArtifacts.value.length == 0);
     return { listingArtifacts, loading, error };
 }
 
