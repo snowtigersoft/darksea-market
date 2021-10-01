@@ -18,7 +18,7 @@ const PriceCell = styled.div`
 
 const defaultSort = [{key: 'rarity', d: -1}, {key: 'price', d: 1}];
 
-export function ListingPane({selected, artifacts, loading}) {
+export function ListingPane({selected, artifacts, loading, mine}) {
     if (!selected) {
         return null;
     }
@@ -26,7 +26,9 @@ export function ListingPane({selected, artifacts, loading}) {
     const [active, setActive] = useState(undefined);
     const [sort, setSort] = useState(defaultSort);
     
-    const artifactChildren = artifacts.sort(sortByKey(sort)).map(artifact => {
+    const artifactChildren = artifacts.filter((artifact) => {
+        return (artifact.owner === own && mine) || (artifact.owner !== own && !mine)
+    }).sort(sortByKey(sort)).map(artifact => {
         const rows = [<tr key={artifact.id} style={table}>
             <td><ArtifactRarityTypeLabelAnim artifact={artifact} /></td>
             <td><Multiplier mult={artifact.upgrade.energyCapMultiplier} /></td>
@@ -47,8 +49,16 @@ export function ListingPane({selected, artifacts, loading}) {
         return rows;
     });
 
+    const tip = `export { default } from 'https://df.snowtigersoft.com/darksea_market/06r4/DarkSeaMarketPlugin.js';`;
+
     return (
         <div style={listStyle}>
+            <div>
+                Please use follow code for current round: <br/>
+                <code>
+                { tip }
+                </code>
+            </div>
             {loading ? <Loading /> :
             artifactChildren.length ? 
             <table style={table}>

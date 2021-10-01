@@ -29,10 +29,9 @@ export function App({ contract }) {
             <div>
                 <div style={buttonBar}>
                     <button onClick={() => setTab('listing')} style={tab === 'listing' ? activeButton : {}}>Listing</button>
-                    <button onClick={() => setTab('inventory')} style={tab === 'inventory' ? activeButton : {}}>Inventory</button>
                 </div>
                 <div>
-                    <ListingPane selected={tab === 'listing'} artifacts={artifacts} loading={loading}/>
+                    <ListingPane selected={tab === 'listing'} artifacts={artifacts} loading={loading} mine={true}/>
                     <InventoryPane selected={tab === 'inventory'}/>
                 </div>
                 <FooterPane/>
