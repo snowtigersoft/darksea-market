@@ -10,13 +10,12 @@ export async function getMarketContract() {
 }
 
 export async function getTokenContract() {
-    const abi = await fetch(TOKENS_APPROVAL_ABI).then(res => res.json())
     //@ts-expect-error
-    return df.loadContract(TOKENS_CONTRACT_ADDRESS, abi);
+    return df.loadContract(TOKENS_CONTRACT_ADDRESS, TOKENS_APPROVAL_ABI);
 }
 
 export async function getAllArtifacts(contract) {
-    const artifacts = await contract.getAllArtifacts();
+    const artifacts = await contract.getAllItems(TOKENS_CONTRACT_ADDRESS);
     return artifacts.filter(item => item.status === 0);
 }
 
@@ -81,7 +80,9 @@ export async function callAction(contract, action, args, overrids = {
         throw (new Error('no signer, cannot execute tx'));
     }
 
-    await checkAndApprove();
+    if (action.methodName === "list") {
+        await checkAndApprove();
+    }
 
     if (overrids.gasPrice === undefined) {
         //@ts-expect-error

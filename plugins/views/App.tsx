@@ -19,8 +19,8 @@ const activeButton = {
 export function App({ contract }) {
     console.log("[DarkSeaMarket] Starting market");
 
-    // ['listing', 'inventory']
-    const [tab, setTab] = useState('listing');
+    // ['market', 'listing', 'inventory']
+    const [tab, setTab] = useState('market');
     const { listingArtifacts, loading } = useListingArtifacts(contract.market, 10000);
     const artifacts = listingArtifacts.value || [];
 
@@ -28,9 +28,12 @@ export function App({ contract }) {
         <ContractProvider value={contract}>
             <div>
                 <div style={buttonBar}>
+                    <button onClick={() => setTab('market')} style={tab === 'market' ? activeButton : {}}>Market</button>
                     <button onClick={() => setTab('listing')} style={tab === 'listing' ? activeButton : {}}>Listing</button>
+                    <button onClick={() => setTab('inventory')} style={tab === 'inventory' ? activeButton : {}}>Inventory</button>
                 </div>
                 <div>
+                    <ListingPane selected={tab === 'market'} artifacts={artifacts} loading={loading} mine={false}/>
                     <ListingPane selected={tab === 'listing'} artifacts={artifacts} loading={loading} mine={true}/>
                     <InventoryPane selected={tab === 'inventory'}/>
                 </div>

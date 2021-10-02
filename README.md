@@ -24,7 +24,7 @@ At least 20% of the fees will be donated to Dark Forest via Gitcoin.
 ## Installation
 Logging into the to the game, create a new plugin, and parse the follow line to the code area:
 ```javascript
-export { default } from "https://df.snowtigersoft.com/darksea_market/06r3/DarkSeaMarketPlugin.js";
+export { default } from "https://df.snowtigersoft.com/darksea_market/06r4/DarkSeaMarketPlugin.js";
 ```
 
 ## Warning

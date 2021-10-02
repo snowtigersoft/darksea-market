@@ -9,7 +9,7 @@ import {
 } from '@darkforest_eth/types';
 import { useCallback, useEffect, useMemo, useState, useContext } from 'react';
 import { ListingArtifact } from './types';
-import { MARKET_CONTRACT_ADDRESS, own } from '../contants';
+import { MARKET_CONTRACT_ADDRESS, TOKENS_CONTRACT_ADDRESS, own } from '../contants';
 import { ContractContext } from "./ContractContext";
 import { getAllArtifacts, notify } from './helpers';
 import { artifactIdFromEthersBN } from '@darkforest_eth/serde';
@@ -116,9 +116,9 @@ export function useListingArtifacts(market, poll: number | undefined = undefined
         };
     }
 
-    async function onListingChange(listId) {
+    async function onListingChange(token, listId) {
         console.log("[DarkSeaMarket] On listing change");
-        const item = await market.getArtifact(listId);
+        const item = await market.getItem(TOKENS_CONTRACT_ADDRESS, listId);
         const artifact = buildArfifact({item: item});
         if (new Date().getTime() - lastRefreshTime > 1000) {
             load();
@@ -187,7 +187,7 @@ export function useBalance() {
     const [balance, setBalance] = useState(0);
 
     async function updateBalance(listId) {
-        const artifact = await market.getArtifact(listId);
+        const artifact = await market.getItem(TOKENS_CONTRACT_ADDRESS, listId);
         if (artifact.owner.toLowerCase() === own || artifact.buyer.toLowerCase() === own) {
             setBalance(await market.getMyBalance());
         }

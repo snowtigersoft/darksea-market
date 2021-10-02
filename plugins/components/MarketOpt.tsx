@@ -3,7 +3,7 @@ import { ButtonGroup } from "./CoreUI";
 import React, { useState } from "react";
 import { callAction, getRandomActionId } from "../helpers/helpers";
 import { BigNumber, utils } from "ethers";
-import { notifyManager, own } from "../contants";
+import { notifyManager, TOKENS_CONTRACT_ADDRESS, own } from "../contants";
 import { useContract } from "../helpers/AppHooks";
 import styled from "styled-components";
 
@@ -30,7 +30,7 @@ export function MarketOpt({ artifact, onCancel }) {
                 gasLimit: 5000000,
                 gasPrice: undefined,
             };
-            callAction(market, action, [BigNumber.from(artifact.listId)], overrids).then(()=>{
+            callAction(market, action, [TOKENS_CONTRACT_ADDRESS, BigNumber.from(artifact.listId)], overrids).then(()=>{
                 setShow(false);
             }).catch((err) => {
                 console.error(err);
@@ -48,7 +48,7 @@ export function MarketOpt({ artifact, onCancel }) {
                 actionId: getRandomActionId(),
                 methodName: 'unlist',
             };
-            callAction(market, action, [BigNumber.from(artifact.listId)]).then(()=>{
+            callAction(market, action, [TOKENS_CONTRACT_ADDRESS, BigNumber.from(artifact.listId)]).then(()=>{
                 setShow(false);
             }).catch((err) => {
                 console.error(err);

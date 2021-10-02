@@ -1,253 +1,263 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "./DarkSeaMarketTypes.sol";
+import "./DarkForestTypes.sol";
+import "./DarkSeaMarketStorage.sol";
+import "./DarkSeaMarketList.sol";
+import "./DarkSeaMarketOffer.sol";
 
-interface DarkForestTokens {
-    function transferFrom(address from, address to, uint256 tokenID) external;
-}
 
-contract DarkSeaMarket is Ownable {
-    event Bought(uint256 blockNumber);
-    event Listed(uint256 blockNumber);
-    event Unlisted(uint256 blockNumber);
+contract DarkSeaMarket is Initializable, DarkSeaMarketStorage  {
+    event Bought(address indexed token, uint256 listId);
+    event Listed(address indexed token, uint256 listId);
+    event Unlisted(address indexed token, uint256 listId);
+    event PlacedOffer(address indexed token, uint256 offerId);
+    event CancelOffer(address indexed token, uint256 offerId);
+    event FillOffer(address indexed token, uint256 offerId);
     event FeeChanged(uint256 fee);
-    event MinPriceChanged(uint256 minPrice);
     event TransferFeeChanged(uint256 transferFee);
+    event AddCollection(address indexed token, address owner, uint256 fee, uint256 minPrice);
+    event EditCollection(address indexed token, address owner, uint256 fee, uint256 minPrice);
+    event CollectionOwnerChanged(address indexed token, address owner);
+    event CollectionFeeChanged(address indexed token, uint fee);
+    event MinPriceChanged(address indexed token, uint256 minPrice);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    enum Status {
-        LISTED, 
-        UNLISTED, 
-        SOLD
-    }
-  
-    struct Item {
-        uint256 listId;
-        uint256 tokenID;
-        address owner; // who owns the listed artifact
-        address buyer;
-        uint128 artifactType;
-        uint128 rarity;
-        uint256 price;
-        uint256 payout;  // price - price * fee / 100 or price - transferPrice
-        Status status;
-    }
-
-    struct Storage {
-        uint256 fee;
-        uint256 minPrice;
-        uint256 transferFee;
-        uint256 feeBalance;
-        uint256 listingCount;
-        bool paused;
-        mapping(uint256 => Item) listings; // all listings 
-        uint256[] listedIds;
-        mapping(address => uint256) funds;
-    }
-    
-    DarkForestTokens private DFTokens; 
-    Storage private s;
-
-    constructor(address tokensAddress, uint8 fee, uint256 minPrice, uint256 transferFee) {
-        DFTokens = DarkForestTokens(tokensAddress);  
+    function initialize(uint256 fee, uint256 transferFee, address owner) public initializer {
         s.paused = false;
         s.fee = fee;
-        s.minPrice = minPrice;
         s.transferFee = transferFee;
+        s.owner = owner;
     }
 
-    function list(address buyer, uint256 tokenID, uint8 artifactType, uint8 rarity, uint256 price) external  {
-        require(!s.paused, "Market is already paused");
-
-        uint256 payout = price - ((price * s.fee) / 100);
-        if (buyer == address(0)) {
-            require(price >= s.minPrice, "Price too low");
-        } else {
-            payout = price - s.transferFee;
-            require(payout >= 0, "Price too low");
-        }
-
-        uint256 listId =
-            uint256(
-                keccak256(
-                    abi.encodePacked(
-                        tokenID,
-                        msg.sender,
-                        price,
-                        block.timestamp,
-                        block.difficulty
-                    )
-                )
-            );
-        
-        s.listings[listId] = Item({
-            listId: listId,
-            tokenID: tokenID,
-            owner: msg.sender,
-            buyer: buyer,
-            artifactType: artifactType,
-            rarity: rarity,
-            price: price,
-            payout: payout,
-            status: Status.LISTED
-        });
-
-        s.listedIds.push(listId);
-        s.listingCount++;
-
-        DFTokens.transferFrom(msg.sender, address(this), tokenID);
-        emit Listed(listId);
+    modifier onlyOwner() {
+        require(getOwner() == msg.sender, "Ownable: caller is not the owner");
+        _;
     }
 
-    // buying function. User input is the price include fee
-    function buy(uint256 listId) external payable  {
-        require(!s.paused, "Market is already paused");
-        
-        Item memory item = s.listings[listId];
+    modifier tokenExists(address token) {
+        require(s.collections[token].idx > 0, "Collection not exists");
+        _;
+    }
 
+    modifier tokenNotExists(address token) {
+        require(s.collections[token].idx == 0, "Collection exists");
+        _;
+    }
+
+    modifier notPaused(address token) {
+        require(!s.paused, "Market is already paused");
+        require(!s.collections[token].paused, "Collection is already paused");
+        _;
+    }
+
+    modifier isApproved(address token, uint256 tokenID) {
+        Tokens t = s.collections[token].token;
+        require(t.getApproved(tokenID) == address(this) || t.isApprovedForAll(t.ownerOf(tokenID), address(this)), "Approve require");
+        _;
+    }
+
+    modifier onlyCollectionOwner(address token) {
+        require(s.collections[token].owner == msg.sender, "Not the owner of collection");
+        _;
+    }
+
+    function getOwner() public view returns (address) {
+        return s.owner;
+    }
+
+    // list
+    function list(address token, address buyer, uint256 tokenID, uint256 price) external tokenExists(token) notPaused(token) isApproved(token, tokenID) {
+        uint256 listId = DarkSeaMarketList.list(token, buyer, tokenID, price);
+        emit Listed(token, listId);
+    }
+
+    function buy(address token, uint256 listId) public payable tokenExists(token) notPaused(token) {
+        DarkSeaMarketTypes.Item memory item = s.collections[token].listings[listId];
         require (msg.value == item.price, "wrong value");
-        require (item.status == Status.LISTED, "artifact not listed");
-
-        if (item.buyer != address(0)) {
-            require (item.buyer == msg.sender, "Wrong sender");
-        }
-
-        item.status = Status.SOLD;
-        item.buyer = msg.sender;
-
-        s.listings[listId] = item;
-        s.funds[item.owner] += item.payout;
-        s.listingCount--;
-        s.feeBalance += item.price - item.payout;
-
-        DFTokens.transferFrom(address(this), msg.sender, item.tokenID);
-
-        emit Bought(listId);
+        DarkSeaMarketList.buy(token, listId);
+        emit Bought(token, listId);
     }
 
+    function unlist (address token, uint256 listId) public tokenExists(token) {
+        DarkSeaMarketList.unlist(token, listId);
+        emit Unlisted(token, listId);
+    }
+
+    function getItem(address token, uint256 listId) public view tokenExists(token) returns (DarkSeaMarketTypes.Item memory item) {
+        item = DarkSeaMarketList.getItem(token, listId);
+    }
+
+    function bulkGetItems(address token, uint256 startIdx, uint256 endIdx) public view tokenExists(token) returns (DarkSeaMarketTypes.Item[] memory ret) {
+        ret = DarkSeaMarketList.bulkGetItems(token, startIdx, endIdx);
+    }
+
+    function getAllItems(address token) public view tokenExists(token) returns (DarkSeaMarketTypes.Item[] memory ret) {
+        ret = bulkGetItems(token, 0, s.collections[token].listedIds.length);
+    }
+
+    function getItemPage(address token, uint256 pageIdx, uint256 pageSize) public view tokenExists(token) returns (DarkSeaMarketTypes.Item[] memory ret) {
+        ret = DarkSeaMarketList.getItemPage(token, pageIdx, pageSize);
+    }
+
+    function getNItemsByOwner(address token, address owner) public view tokenExists(token) returns (uint256) {
+        return DarkSeaMarketList.getNItemsByOwner(token, owner);
+    }
+
+    function getItemsByOwner(address token, address owner) public view tokenExists(token) returns (DarkSeaMarketTypes.Item[] memory ret) {
+        ret = DarkSeaMarketList.getItemsByOwner(token, owner);
+    }
+
+    function getNMyItems(address token) public view tokenExists(token) returns (uint256) {
+        return getNItemsByOwner(token, msg.sender);
+    }
+
+    function getMyItems(address token) public view tokenExists(token) returns (DarkSeaMarketTypes.Item[] memory) {
+        return getItemsByOwner(token, msg.sender);
+    }
+
+    // offer
+    function placeOffer(address token, uint256 price, uint256 qty, DarkForestTypes.ArtifactRarity rarity, DarkForestTypes.ArtifactType artifactType) external payable tokenExists(token) notPaused(token) {
+        require(msg.value == price * qty, "Price too low");
+        uint256 offerId = DarkSeaMarketOffer.placeOffer(token, price, qty, rarity, artifactType);
+        emit PlacedOffer(token, offerId);
+    }
+
+    function cancelOffer (address token, uint256 offerId) external tokenExists(token) {
+        DarkSeaMarketOffer.cancelOffer(token, offerId);
+        emit CancelOffer(token, offerId);
+    }
+
+    function fillOffer (address token, uint256 offerId, uint256 tokenID) external tokenExists(token) isApproved(token, tokenID) {
+        DarkSeaMarketOffer.fillOffer(token, offerId, tokenID);
+        emit FillOffer(token, offerId);
+    }
+
+    function getOffer(address token, uint256 offerId) public view tokenExists(token) returns (DarkSeaMarketTypes.Offer memory ret) {
+        ret = DarkSeaMarketOffer.getOffer(token, offerId);
+    }
+
+    function bulkGetOffers(address token, uint256 startIdx, uint256 endIdx) public view tokenExists(token) returns (DarkSeaMarketTypes.Offer[] memory ret) {
+        ret = DarkSeaMarketOffer.bulkGetOffers(token, startIdx, endIdx);
+    }
+
+    function getAllOffers(address token) public view tokenExists(token) returns (DarkSeaMarketTypes.Offer[] memory) {
+        return bulkGetOffers(token, 0, s.collections[token].offerIds.length);
+    }
+
+    function getOfferPage(address token, uint256 pageIdx, uint256 pageSize) public view tokenExists(token) returns (DarkSeaMarketTypes.Offer[] memory ret) {
+        ret = DarkSeaMarketOffer.getOfferPage(token, pageIdx, pageSize);
+    }
+
+    function getNOffersByBuyer(address token, address buyer) public view tokenExists(token) returns (uint256) {
+        return DarkSeaMarketOffer.getNOffersByBuyer(token, buyer);
+    }
+
+    function getOffersByBuyer(address token, address buyer) public view tokenExists(token) returns (DarkSeaMarketTypes.Offer[] memory ret) {
+        ret = DarkSeaMarketOffer.getOffersByBuyer(token, buyer);
+    }
+
+    function getNMyOffers(address token) public view tokenExists(token) returns (uint256) {
+        return getNOffersByBuyer(token, msg.sender);
+    }
+
+    function getMyOffers(address token) public view tokenExists(token) returns (DarkSeaMarketTypes.Offer[] memory) {
+        return getOffersByBuyer(token, msg.sender);
+    }
+
+    //
     function withdraw() external {
         uint256 amount = s.funds[msg.sender];
         if (amount > 0) {
             s.funds[msg.sender] = 0;
-            Address.sendValue(payable(msg.sender), amount);
+            AddressUpgradeable.sendValue(payable(msg.sender), amount);
         }
     }
 
-    function getBalanceByAddress(address addr) public view returns (uint256) {
-        return s.funds[addr];
+    function getCollectionFee(address token) public view tokenExists(token) returns (uint256 fee) {
+        fee = s.collections[token].fee;
     }
 
-    function getMyBalance() public view returns (uint256) {
-        return s.funds[msg.sender];
-    }
-    
-    // Unlist a token you listed
-    // Useful if you want your tokens back
-    function unlist (uint256 listId) external {
-        Item memory item = s.listings[listId];
-        require(msg.sender == item.owner);
-
-        item.status = Status.UNLISTED;
-
-        s.listings[listId] = item;
-        s.listingCount--;
-        
-        DFTokens.transferFrom(address(this), item.owner, item.tokenID);
-        emit Unlisted(listId);
+    function getCollectionMinPrice(address token) public view tokenExists(token) returns (uint256){
+        return s.collections[token].minPrice;
     }
 
-    function getNListedArtifacts() public view returns (uint256) {
-        return s.listedIds.length;
+    // collection owner functions
+
+    function collectCollectionFees(address token) external tokenExists(token) onlyCollectionOwner(token) {
+        require (s.collections[token].feeBalance > 0, "No fee left");
+        uint256 amount = s.collections[token].feeBalance;
+        s.collections[token].feeBalance = 0;
+        AddressUpgradeable.sendValue(payable(msg.sender), amount);
     }
 
-    function getArtifact(uint256 listId) public view returns (Item memory) {
-        Item memory token = s.listings[listId];
-        require(token.owner != address(0), "No artifact for that id");
-        return token;
+    function transferCollectionOwner(address token, address newOwner) external tokenExists(token) onlyCollectionOwner(token) {
+        s.collections[token].owner = newOwner;
+        emit CollectionOwnerChanged(token, newOwner);
     }
 
-    function bulkGetArtifacts(uint256 startIdx, uint256 endIdx) public view returns (Item[] memory ret) {
-        ret = new Item[](endIdx - startIdx);
-        for (uint256 idx = startIdx; idx < endIdx; idx++) {
-            ret[idx - startIdx] = getArtifact(s.listedIds[idx]);
-        }
+    function setCollectionFee(address token, uint256 fee) external tokenExists(token) onlyCollectionOwner(token) {
+        require(fee <= 2000, "don't be greater than 20%!");
+        s.collections[token].fee = fee;
+        emit CollectionFeeChanged(token, s.fee);
     }
 
-    function getAllArtifacts() public view returns (Item[] memory) {
-        return bulkGetArtifacts(0, s.listedIds.length);
+    function getCollectionFeeBalance(address token) external view tokenExists(token) onlyCollectionOwner(token) returns (uint256) {
+        return s.collections[token].feeBalance;
     }
 
-    function getArtifactPage(uint256 pageIdx, uint256 pageSize) public view returns (Item[] memory) {
-        uint256 startIdx = pageIdx * pageSize;
-        require(startIdx <= s.listedIds.length, "Page number too high");
-        uint256 pageEnd = startIdx + pageSize;
-        uint256 endIdx = pageEnd <= s.listedIds.length ? pageEnd : s.listedIds.length;
-        return bulkGetArtifacts(startIdx, endIdx);
-    }
-
-    function getNArtifactsByOwner(address owner) public view returns (uint256) {
-        uint256 cnt = 0;
-        for (uint256 idx = 0; idx < s.listedIds.length; idx++) {
-            if (getArtifact(s.listedIds[idx]).owner == owner) {
-                cnt++;
-            }
-        }
-        return cnt;
-    }
-
-    function getArtifactsByOwner(address owner) public view returns (Item[] memory ret) {
-        ret = new Item[](getNArtifactsByOwner(owner));
-        uint256 pos = 0;
-        Item memory item;
-        for (uint256 idx = 0; idx < s.listedIds.length; idx++) {
-            item = getArtifact(s.listedIds[idx]);
-            if (item.owner == owner) {
-                ret[pos] = item;
-                pos++;
-            }
-        }
-    }
-
-    function getNMyArtifacts() public view returns (uint256) {
-        return getNArtifactsByOwner(msg.sender);
-    }
-
-    function getMyArtifacts() public view returns (Item[] memory) {
-        return getArtifactsByOwner(msg.sender);
-    }
-
-    function getFee() public view returns (uint256) {
-        return s.fee;
-    }
-
-    function getTransferFee() public view returns (uint256) {
-        return s.transferFee;
-    }
-
-    function getMinPrice() public view returns (uint256){
-        return s.minPrice;
+    function getCollectionTotalFee(address token) external view tokenExists(token) onlyCollectionOwner(token) returns (uint256) {
+        return s.collections[token].totalFee;
     }
     
     // ADMIN FUNCTIONS
     
-    // Change the tokens address between rounds
-    function newRound(address tokens) external onlyOwner {
-        DFTokens = DarkForestTokens(tokens);
+    // Add new collection to market
+    function addCollection(address token, address owner, uint256 fee, uint256 minPrice) external onlyOwner tokenNotExists(token) {
+        s.collections[token].token = Tokens(token);
+        s.collections[token].idx = s.collectionIds.length + 1;
+        s.collections[token].owner = owner;
+        s.collections[token].fee = fee;
+        s.collections[token].minPrice = minPrice;
+        s.collections[token].paused = false;
+        s.collectionIds.push(token);
+        emit AddCollection(token, owner, fee, minPrice);
     }
 
-    // Collect fees between rounds
+    function editCollection(address token, address owner, uint256 fee, uint256 minPrice) external onlyOwner tokenExists(token) {
+        s.collections[token].owner = owner;
+        s.collections[token].fee = fee;
+        s.collections[token].minPrice = minPrice;
+        emit EditCollection(token, owner, fee, minPrice);
+    }
+
+    // Collect fees
+    function sendFees(address to, uint256 amount) public onlyOwner {
+        require (s.feeBalance >= amount, "Not enough fee left");
+        s.feeBalance -= amount;
+        AddressUpgradeable.sendValue(payable(to), amount);
+    }
+
     function collectFees() external onlyOwner {
-        require (s.feeBalance > 0, "No fee left");
-        Address.sendValue(payable(owner()), s.feeBalance);
+        sendFees(getOwner(), s.feeBalance);
     }
     
     // change the fee
     function setFee(uint256 fee) external onlyOwner {
-        require(fee <= 20, "don't be greater than 20%!");
+        require(fee <= 2000, "don't be greater than 20%!");
         s.fee = fee;
         emit FeeChanged(s.fee);
+    }
+
+    function getTotalFee() external view onlyOwner returns (uint256) {
+        return s.totalFee;
+    }
+
+    function getFeeBalance() external view onlyOwner returns (uint256) {
+        return s.feeBalance;
     }
 
     function setTransferFee(uint256 transferFee) external onlyOwner {
@@ -255,17 +265,33 @@ contract DarkSeaMarket is Ownable {
         emit TransferFeeChanged(s.transferFee);
     }
 
-    function setMinPrice(uint256 minPrice) external onlyOwner {
-        s.minPrice = minPrice;
-        emit MinPriceChanged(s.minPrice);
+    function setMinPrice(address token, uint256 minPrice) external onlyOwner tokenExists(token) {
+        s.collections[token].minPrice = minPrice;
+        emit MinPriceChanged(token, s.collections[token].minPrice);
     }
     
-    function pause() external onlyOwner {
+    function pause(address token) external onlyOwner tokenExists(token) {
+        s.collections[token].paused = true;
+    }
+
+    function pauseMarket() external onlyOwner {
         s.paused = true;
     }
     
-    function unpause() external onlyOwner {
+    function unpause(address token) external onlyOwner tokenExists(token) {
+        require(s.collections[token].paused, "Collection is already unpaused");
+        s.collections[token].paused = false;
+    }
+
+    function unpauseMarket() external onlyOwner {
         require(s.paused, "Market is already unpaused");
         s.paused = false;
+    }
+
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        address oldOwner = s.owner;
+        s.owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
     }
 }

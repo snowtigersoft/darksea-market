@@ -4,7 +4,7 @@ import { ButtonGroup } from "./CoreUI";
 import React, { useState } from "react";
 import { callAction, getRandomActionId } from "../helpers/helpers";
 import { BigNumber, utils } from "ethers";
-import { EMPTY_ADDRESS, notifyManager } from "../contants";
+import { EMPTY_ADDRESS, TOKENS_CONTRACT_ADDRESS, notifyManager } from "../contants";
 import { useContract } from "../helpers/AppHooks";
 
 export function InventoryOpt({ artifact, onCancel }) {
@@ -19,7 +19,7 @@ export function InventoryOpt({ artifact, onCancel }) {
             utils.parseEther(value);
             setPrice(value);
         } catch (err) {
-            console.error("[ArtifactMarket] Not a valid Ether value.");
+            console.error("[DarkSeaMarket] Not a valid Ether value.");
         }
     }
 
@@ -35,10 +35,9 @@ export function InventoryOpt({ artifact, onCancel }) {
                 methodName: 'list',
             };
             callAction(market, action,
-                [EMPTY_ADDRESS,
+                [TOKENS_CONTRACT_ADDRESS,
+                EMPTY_ADDRESS,
                 BigNumber.from('0x' + artifact.id), 
-                artifact.artifactType,
-                artifact.rarity,    
                 utils.parseEther(price.toString())
                 ]).then(() => {
                     setShow(false);

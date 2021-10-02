@@ -53,12 +53,6 @@ export function ListingPane({selected, artifacts, loading, mine}) {
 
     return (
         <div style={listStyle}>
-            <div>
-                Please use follow code for current round: <br/>
-                <code>
-                { tip }
-                </code>
-            </div>
             {loading ? <Loading /> :
             artifactChildren.length ? 
             <table style={table}>
