@@ -10,6 +10,7 @@ import { ArtifactRarityLabelAnim, ArtifactTypeText } from "./labels/ArtifactLabe
 import { Multiplier } from "./Multiplier";
 import { InventoryOpt } from "./InventoryOpt";
 import { MarketOpt } from "./MarketOpt";
+import { OfferOpt } from "./OfferOpt";
 import { getUpgradeStat } from '../helpers/helpers';
 
 const ArtifactDetailWrapper = styled.div`
@@ -72,7 +73,7 @@ function UpgradeStatInfo({
     );
 }
 
-export function ArtifactDetail({ artifact, onCancel }) {
+export function ArtifactDetail({ artifact, onCancel, offer }) {
     return (
         <ArtifactDetailWrapper>
             <ArtifactImage artifact={artifact} size={128} />
@@ -90,9 +91,10 @@ export function ArtifactDetail({ artifact, onCancel }) {
             <div>
                 <ArtifactNameSubtitle>
                     <ArtifactRarityLabelAnim artifact={artifact} />{' '}
-                    <ArtifactTypeText artifact={artifact} />
+                    <ArtifactTypeText artifact={artifact} isOffer={false} />
                 </ArtifactNameSubtitle>
-                {artifact.price ? 
+                {offer ? <OfferOpt onCancel={onCancel} artifact={artifact} offer={offer} /> : 
+                artifact.price ? 
                 <MarketOpt onCancel={onCancel} artifact={artifact} /> : 
                 <InventoryOpt onCancel={onCancel} artifact={artifact} />}
             </div>

@@ -19,6 +19,11 @@ export async function getAllArtifacts(contract) {
     return artifacts.filter(item => item.status === 0);
 }
 
+export async function getAllOffers(contract) {
+    const offers = await contract.getAllOffers(TOKENS_CONTRACT_ADDRESS);
+    return offers.filter(item => item.status === 0);
+}
+
 export function notify(msg) {
     notifyManager.notify(1, `[DarkSeaMarket] ${msg}`);
 }
@@ -80,7 +85,7 @@ export async function callAction(contract, action, args, overrids = {
         throw (new Error('no signer, cannot execute tx'));
     }
 
-    if (action.methodName === "list") {
+    if (action.methodName === "list" || action.methodName === "fillOffer") {
         await checkAndApprove();
     }
 
@@ -151,7 +156,7 @@ export function sortByKey(sorts) {
             } else {
                 a = n1[key], b = n2[key];
             }
-            if (key == "price") {
+            if (typeof(a) === 'object') {
                 a = +utils.formatEther(a);
                 b = +utils.formatEther(b);
             }

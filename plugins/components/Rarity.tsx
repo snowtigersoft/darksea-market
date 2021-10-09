@@ -15,7 +15,7 @@ export const Rarity: FunctionComponent<Props> = ({ artifact }) => {
     }
     return (
         <span style={rarityStyle}>
-          <ArtifactRarityTypeLabelAnim artifact={artifact} />
+          <ArtifactRarityTypeLabelAnim artifact={artifact} isOffer={false}/>
         </span>
     );
 };

@@ -37,3 +37,21 @@ export const ButtonGroup = styled.div`
       margin: 0 1em;
   }
 `;
+
+export const Select = styled.select`
+  ${({ wide }: { wide?: boolean }) => css`
+    outline: none;
+    background: ${dfstyles.colors.background};
+    color: ${dfstyles.colors.subtext};
+    border-radius: 4px;
+    border: 1px solid ${dfstyles.colors.border};
+    width: ${wide ? '100%' : '12em'};
+    padding: 2px 6px;
+    cursor: pointer;
+    &:hover {
+      border: 1px solid ${dfstyles.colors.subtext};
+      background: ${dfstyles.colors.subtext};
+      color: ${dfstyles.colors.background};
+    }
+  `}
+`;

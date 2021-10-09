@@ -8,10 +8,10 @@ import {
     EthAddress,
 } from '@darkforest_eth/types';
 import { useCallback, useEffect, useMemo, useState, useContext } from 'react';
-import { ListingArtifact } from './types';
+import { ListingArtifact, OfferArtifact } from './types';
 import { MARKET_CONTRACT_ADDRESS, TOKENS_CONTRACT_ADDRESS, own } from '../contants';
 import { ContractContext } from "./ContractContext";
-import { getAllArtifacts, notify } from './helpers';
+import { getAllArtifacts, getAllOffers, notify } from './helpers';
 import { artifactIdFromEthersBN } from '@darkforest_eth/serde';
 
 
@@ -182,26 +182,67 @@ export function useListingArtifacts(market, poll: number | undefined = undefined
     return { listingArtifacts, loading, error };
 }
 
+export function useOfferArtifacts(market, poll: number | undefined = undefined) {
+    //const { market } = useContract();
+    const [offerArtifacts, setOfferArtifacts] = useState<Wrapper<OfferArtifact[]>>(new Wrapper([]));
+    const [loadingOffer, setLoadingOffer] = useState(true);
+    const [error, setError] = useState<Error | undefined>();
+    const [lastRefreshTime, setLastRefreshTime] = useState(new Date().getTime());
+
+    async function onOfferChange(token, offerId) {
+        console.log("[DarkSeaMarket] On offer change");
+        if (new Date().getTime() - lastRefreshTime > 1000) {
+            load();
+        }
+        console.log("[DarkSeaMarket] Success");
+    }
+
+    const load = useCallback(async function load() {
+        try {
+            console.log("[DarkSeaMarket] Loading offers");
+            setLastRefreshTime(new Date().getTime());
+            let offers = await getAllOffers(market);
+            setOfferArtifacts(new Wrapper(offers));
+            setLoadingOffer(false);
+            console.info("[DarkSeaMarket] Loading offers success");
+        } catch (e) {
+            console.log('[DarkSeaMarket] error loading offers', e);
+            setLoadingOffer(false);
+            setError(e);
+        }
+    }, [offerArtifacts]);
+
+    useEffect(() => {
+        market.on("PlacedOffer", onOfferChange);
+        market.on("CancelOffer", onOfferChange);
+        market.on("FillOffer", onOfferChange);
+
+        return () => {
+            market.off("PlacedOffer", onOfferChange);
+            market.off("CancelOffer", onOfferChange);
+            market.off("FillOffer", onOfferChange);
+        };
+    }, [offerArtifacts]);
+    
+    usePoll(load, poll, offerArtifacts.value.length == 0);
+    return { offerArtifacts, loadingOffer, error };
+}
+
 export function useBalance() {
     const { market } = useContract();
     const [balance, setBalance] = useState(0);
 
-    async function updateBalance(listId) {
-        const artifact = await market.getItem(TOKENS_CONTRACT_ADDRESS, listId);
-        if (artifact.owner.toLowerCase() === own || artifact.buyer.toLowerCase() === own) {
-            setBalance(await market.getMyBalance());
-        }
+    async function updateBalance(token, listId) {
+        setBalance(await market.getMyBalance());
     }
 
     useEffect(() => {
         market.on("Bought", updateBalance);
-        market.on("Listed", updateBalance);
-        market.on("Unlisted", updateBalance);
+        market.on("FillOffer", updateBalance);
 
         return () => {
             market.off("Bought", updateBalance);
-            market.off("Listed", updateBalance);
-            market.off("Unlisted", updateBalance);
+            market.off("FillOffer", updateBalance);
         };
     }, []);
 

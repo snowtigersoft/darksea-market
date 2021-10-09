@@ -40,3 +40,15 @@ export declare type ListingArtifact = {
     listId: BigNumber;
     tokenID: BigNumber;
 }
+
+export declare type OfferArtifact = {
+    offerId: BigNumber;
+    qty: BigNumber;
+    deal: BigNumber;
+    buyer: EthAddress;
+    price: BigNumber;
+    tokenID: BigNumber;
+    rarity: ArtifactRarity;
+    artifactType: ArtifactType;
+    status: ListingStatus;
+}

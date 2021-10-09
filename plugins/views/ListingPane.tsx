@@ -27,10 +27,10 @@ export function ListingPane({selected, artifacts, loading, mine}) {
     const [sort, setSort] = useState(defaultSort);
     
     const artifactChildren = artifacts.filter((artifact) => {
-        return (artifact.owner === own && mine) || (artifact.owner !== own && !mine)
+        return (artifact.owner === own && mine) || !mine
     }).sort(sortByKey(sort)).map(artifact => {
         const rows = [<tr key={artifact.id} style={table}>
-            <td><ArtifactRarityTypeLabelAnim artifact={artifact} /></td>
+            <td><ArtifactRarityTypeLabelAnim artifact={artifact} isOffer={false} /></td>
             <td><Multiplier mult={artifact.upgrade.energyCapMultiplier} /></td>
             <td><Multiplier mult={artifact.upgrade.energyGroMultiplier} /></td>
             <td><Multiplier mult={artifact.upgrade.rangeMultiplier} /></td>
@@ -48,8 +48,6 @@ export function ListingPane({selected, artifacts, loading, mine}) {
         }
         return rows;
     });
-
-    const tip = `export { default } from 'https://df.snowtigersoft.com/darksea_market/06r4/DarkSeaMarketPlugin.js';`;
 
     return (
         <div style={listStyle}>

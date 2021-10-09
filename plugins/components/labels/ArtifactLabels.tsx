@@ -11,12 +11,16 @@ import { LegendaryLabel, LegendaryLabelText } from './LegendaryLabel';
 import { MythicLabel, MythicLabelText } from './MythicLabel';
 // raw text
 
+const ArtifactTypeTextRaw = ({ artifact, isOffer}: { artifact: Artifact, isOffer: boolean}) => (
+    isOffer ? ArtifactTypeNames[artifact.artifactType].replace("Unknown", "Any Type") : ArtifactTypeNames[artifact.artifactType]
+);
+
 export const ArtifactRarityText = ({ artifact }: { artifact: Artifact }) => (
     <>{ArtifactRarityNames[artifact.rarity]}</>
 );
 
-export const ArtifactTypeText = ({ artifact }: { artifact: Artifact }) => (
-    <>{ArtifactTypeNames[artifact.artifactType]}</>
+export const ArtifactTypeText = ({ artifact, isOffer}: { artifact: Artifact, isOffer: boolean}) => (
+    <>{ArtifactTypeTextRaw({artifact, isOffer})}</>
 );
 
 // colored labels
@@ -42,13 +46,13 @@ export const ArtifactRarityLabelAnim = ({ artifact }: { artifact: Artifact }) =>
 
 // combined labels
 
-export const ArtifactRarityTypeLabelAnim = ({ artifact }: { artifact: Artifact }) =>
+export const ArtifactRarityTypeLabelAnim = ({ artifact, isOffer }: { artifact: Artifact, isOffer: boolean}) =>
     artifact.rarity === ArtifactRarity.Mythic ? (
-        <MythicLabelText text={ArtifactTypeNames[artifact.artifactType]} />
+        <MythicLabelText text={ArtifactTypeTextRaw({artifact, isOffer})} />
     ) : artifact.rarity === ArtifactRarity.Legendary ? (
-        <LegendaryLabelText text={ArtifactTypeNames[artifact.artifactType]} />
+        <LegendaryLabelText text={ArtifactTypeTextRaw({artifact, isOffer})} />
     ) : (
         <StyledArtifactRarityLabel rarity={artifact.rarity}>
-            <ArtifactTypeText artifact={artifact} />
+            <ArtifactTypeText artifact={artifact} isOffer={isOffer} />
         </StyledArtifactRarityLabel>
     );

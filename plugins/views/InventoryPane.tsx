@@ -5,8 +5,9 @@ import { listStyle, table, textCenter, warning } from "../helpers/styles";
 import { Btn } from "../components/Btn";
 import { sortByKey } from "../helpers/helpers";
 import React, { useState } from "react";
-import { useContract, useMyArtifactsList } from "../helpers/AppHooks";
+import { useMyArtifactsList } from "../helpers/AppHooks";
 import { SortableHeader } from "../components/SortableHeader";
+import { Beware } from "../components/Beware";
 
 const defaultSort = [{key: 'rarity', d: -1}];
 
@@ -14,14 +15,13 @@ export function InventoryPane({ selected }) {
     if (!selected) {
         return null;
     }
-    const { fee } = useContract();
     const [active, setActive] = useState(undefined);
     const [sort, setSort] = useState(defaultSort);
     const my_artifacts = useMyArtifactsList();
 
     let artifactChildren = my_artifacts.sort(sortByKey(sort)).map(artifact => {
         const rows = [<tr key={artifact.id} style={table}>
-            <td><ArtifactRarityTypeLabelAnim artifact={artifact} /></td>
+            <td><ArtifactRarityTypeLabelAnim artifact={artifact} isOffer={false} /></td>
             <td><Multiplier mult={artifact.upgrade.energyCapMultiplier} /></td>
             <td><Multiplier mult={artifact.upgrade.energyGroMultiplier} /></td>
             <td><Multiplier mult={artifact.upgrade.rangeMultiplier} /></td>
@@ -40,10 +40,7 @@ export function InventoryPane({ selected }) {
     });
 
     return (<div style={listStyle}>
-        <div style={textCenter}>
-            <span style={warning}>Beware:</span> {`Darksea will charge a ${fee}% fee!`} <br/> 
-            <span>At least 20% of the fees will be donated to DF via Gitcoin.</span>
-        </div>
+        <Beware />
         {artifactChildren.length ?
             <table style={table}>
                 <SortableHeader sort={sort} setSort={setSort} defaultSort={defaultSort} withPrice={false} />

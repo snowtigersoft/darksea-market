@@ -4,6 +4,7 @@ export const listStyle = {
     maxHeight: '400px',
     overflowX: 'hidden',
     overflowY: 'scroll',
+    width: '100%',
 };
 
 export const RarityColors = {
