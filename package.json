@@ -1,6 +1,6 @@
 {
     "name": "df-artifact-market",
-    "version": "1.0.0",
+    "version": "1.0.5",
     "license": "GPL-3.0",
     "private": true,
     "files": [],
@@ -10,10 +10,11 @@
     "scripts": {
         "format": "prettier --write .",
         "start": "df-plugin-dev-server --glob plugins/*.tsx",
-        "build": "df-plugin-dev-server bundle --glob plugins/*.tsx --outdir=/var/www/html/darksea_market/06r3"
+        "build": "df-plugin-dev-server bundle --glob plugins/*.tsx --outdir=dest"
     },
     "dependencies": {
         "@darkforest_eth/network": "^6.5.5",
+        "bufferutil": "^4.0.6",
         "n": "^7.3.1",
         "react-is": "^17.0.2",
         "yarn": "^1.22.11"

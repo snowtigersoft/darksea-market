@@ -24,16 +24,13 @@ function WithdrawButton({disabled}) {
     function withdraw() {
         if (!processing) {
             setProcessing(true);
-            let action = {
-                actionId: getRandomActionId(),
-                methodName: 'withdraw',
-            };
-            callAction(market, action, []).then(()=>{
+            let methodName = 'withdraw';
+            callAction(market, methodName, []).then(()=>{
                 setProcessing(false);
             }).catch((err) => {
                 setProcessing(false);
                 console.error(err);
-                notifyManager.unsubmittedTxFail(action, err);
+                notifyManager.txInitError(methodName, err);
             });
         }
     }

@@ -30,11 +30,8 @@ export function InventoryOpt({ artifact, onCancel }) {
         }
         if (!processing) {
             setProcessing(true);
-            let action = {
-                actionId: getRandomActionId(),
-                methodName: 'list',
-            };
-            callAction(market, action,
+            let methodName = 'list';
+            callAction(market, methodName,
                 [TOKENS_CONTRACT_ADDRESS,
                 EMPTY_ADDRESS,
                 BigNumber.from('0x' + artifact.id), 
@@ -43,7 +40,7 @@ export function InventoryOpt({ artifact, onCancel }) {
                     setShow(false);
                 }).catch((err) => {
                     console.error(err);
-                    notifyManager.unsubmittedTxFail(action, err);
+                    notifyManager.txInitError(methodName, err);
                 }).finally(() => {
                     setProcessing(false);
                 });

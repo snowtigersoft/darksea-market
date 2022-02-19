@@ -92,16 +92,13 @@ export function CreateOffer() {
   function create() {
     if (!processing) {
       setProcessing(true);
-      let action = {
-        actionId: getRandomActionId(),
-        methodName: 'placeOffer',
-      };
+      let methodName = 'placeOffer';
       const overrids = {
         value: BigNumber.from(utils.parseEther((+price * +qty).toString())).toString(),
         gasLimit: 5000000,
         gasPrice: undefined,
       };
-      callAction(market, action,
+      callAction(market, methodName,
         [TOKENS_CONTRACT_ADDRESS,
           utils.parseEther(price.toString()),
           BigNumber.from(qty),
@@ -113,7 +110,7 @@ export function CreateOffer() {
           setActive(false);
         }).catch((err) => {
           console.error(err);
-          notifyManager.unsubmittedTxFail(action, err);
+          notifyManager.txInitError(methodName, err);
         }).finally(() => {
           setProcessing(false);
         });

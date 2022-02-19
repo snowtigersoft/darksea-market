@@ -21,20 +21,17 @@ export function MarketOpt({ artifact, onCancel }) {
     function buy() {
         if (!processing) {
             setProcessing(true);
-            let action = {
-                actionId: getRandomActionId(),
-                methodName: 'buy',
-            };
+            let methodName = 'buy';
             const overrids = {
                 value: BigNumber.from(artifact.price).toString(),
                 gasLimit: 5000000,
                 gasPrice: undefined,
             };
-            callAction(market, action, [TOKENS_CONTRACT_ADDRESS, BigNumber.from(artifact.listId)], overrids).then(()=>{
+            callAction(market, methodName, [TOKENS_CONTRACT_ADDRESS, BigNumber.from(artifact.listId)], overrids).then(()=>{
                 setShow(false);
             }).catch((err) => {
                 console.error(err);
-                notifyManager.unsubmittedTxFail(action, err);
+                notifyManager.txInitError(methodName, err);
             }).finally(() => {
                 setProcessing(false);
             });
@@ -44,15 +41,12 @@ export function MarketOpt({ artifact, onCancel }) {
     function unlist() {
         if (!processing) {
             setProcessing(true);
-            let action = {
-                actionId: getRandomActionId(),
-                methodName: 'unlist',
-            };
-            callAction(market, action, [TOKENS_CONTRACT_ADDRESS, BigNumber.from(artifact.listId)]).then(()=>{
+            let methodName = 'unlist';
+            callAction(market, methodName, [TOKENS_CONTRACT_ADDRESS, BigNumber.from(artifact.listId)]).then(()=>{
                 setShow(false);
             }).catch((err) => {
                 console.error(err);
-                notifyManager.unsubmittedTxFail(action, err);
+                notifyManager.txInitError(methodName, err);
             }).finally(() => {
                 setProcessing(false);
             });

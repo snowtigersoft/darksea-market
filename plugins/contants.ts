@@ -1,6 +1,6 @@
 export const MARKET_CONTRACT_ADDRESS = "0x4F3Dce4014f804c313d9c28B513C99e40316Bd11";
 export const MARKET_CONTRACT_ABI = 'https://df.snowtigersoft.com/darksea_market/06r4/abi.json';
-export const TOKENS_CONTRACT_ADDRESS = "0x8e7Fc9c67Cf2bc5D001682d17355dc5c7f41e4C1";
+export const TOKENS_CONTRACT_ADDRESS = "0x5da117b8aB8b739346F5EdC166789E5aFb1a7145";
 export const TOKENS_APPROVAL_ABI = [
     {
         type: "function",

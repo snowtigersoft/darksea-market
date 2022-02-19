@@ -76,7 +76,7 @@ function gweiToWei(gwei: number): BigNumber {
     return utils.parseUnits(gwei + '', 'gwei');
 }
   
-export async function callAction(contract, action, args, overrids = {
+export async function callAction(contract, methodName, args, overrids = {
     gasPrice: undefined,
     gasLimit: 2000000
 }) {
@@ -85,40 +85,19 @@ export async function callAction(contract, action, args, overrids = {
         throw (new Error('no signer, cannot execute tx'));
     }
 
-    if (action.methodName === "list" || action.methodName === "fillOffer") {
+    if (methodName === "list" || methodName === "fillOffer") {
         await checkAndApprove();
     }
 
-    if (overrids.gasPrice === undefined) {
-        //@ts-expect-error
-        const ethConnection = df.contractsAPI.ethConnection;
-        overrids.gasPrice = gweiToWei(
-            ethConnection.getAutoGasPriceGwei(
-                ethConnection.getAutoGasPrices(),
-                //@ts-expect-error
-                df.contractsAPI.txExecutor.gasSettingProvider(action)
-            )
-        );
-    }
-    notifyManager.txInit(action);
-
-    const submitted = contract[action.methodName](...args, {
-        ...overrids,
-        //@ts-expect-error
-        nonce: await df.contractsAPI.ethConnection.getNonce(),
-    });
-
-    const txa = {
-        ...action,
-        txHash: (await submitted).hash,
-        sentAtTimestamp: Math.floor(Date.now() / 1000),
+    const tx = {
+        methodName: methodName,
+        contract: contract,
+        args: args
     };
 
     //@ts-expect-error
-    const confirmed = df.contractsAPI.ethConnection.waitForTransaction(txa.txHash);
-
-    //@ts-expect-error
-    return df.contractsAPI.waitFor(txa, confirmed);
+    const e = await df.contractsAPI.submitTransaction(tx, overrids);
+    return e.confirmedPromise
 }
 
 export function getLocalArtifact(artifactId) {

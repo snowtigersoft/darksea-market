@@ -21,11 +21,8 @@ export function OfferOpt({ artifact, onCancel, offer }) {
     function sell() {
         if (!processing) {
             setProcessing(true);
-            let action = {
-                actionId: getRandomActionId(),
-                methodName: 'fillOffer',
-            };
-            callAction(market, action,
+            let methodName = 'fillOffer';
+            callAction(market, methodName,
                 [TOKENS_CONTRACT_ADDRESS,
                     BigNumber.from(offer.offerId),
                     BigNumber.from('0x' + artifact.id)
@@ -33,7 +30,7 @@ export function OfferOpt({ artifact, onCancel, offer }) {
                     setShow(false);
                 }).catch((err) => {
                     console.error(err);
-                    notifyManager.unsubmittedTxFail(action, err);
+                    notifyManager.txInitError(methodName, err);
                 }).finally(() => {
                     setProcessing(false);
                 });

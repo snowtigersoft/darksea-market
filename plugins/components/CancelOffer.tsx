@@ -14,18 +14,15 @@ export function CancelOffer({offer}) {
   function cancel() {
     if (!processing) {
       setProcessing(true);
-      let action = {
-          actionId: getRandomActionId(),
-          methodName: 'cancelOffer',
-      };
-      callAction(market, action,
+      let methodName = 'cancelOffer';
+      callAction(market, methodName,
           [TOKENS_CONTRACT_ADDRESS,
               BigNumber.from(offer.offerId)
           ]).then(() => {
               setShow(false);
           }).catch((err) => {
               console.error(err);
-              notifyManager.unsubmittedTxFail(action, err);
+              notifyManager.txInitError(methodName, err);
           }).finally(() => {
               setProcessing(false);
           });

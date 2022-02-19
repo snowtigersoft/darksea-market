@@ -19,7 +19,9 @@ export function InventoryPane({ selected }) {
     const [sort, setSort] = useState(defaultSort);
     const my_artifacts = useMyArtifactsList();
 
-    let artifactChildren = my_artifacts.sort(sortByKey(sort)).map(artifact => {
+    let artifactChildren = my_artifacts.filter(artifact => {
+        return artifact.artifactType < 10 && !artifact.onPlanetId
+    }).sort(sortByKey(sort)).map(artifact => {
         const rows = [<tr key={artifact.id} style={table}>
             <td><ArtifactRarityTypeLabelAnim artifact={artifact} isOffer={false} /></td>
             <td><Multiplier mult={artifact.upgrade.energyCapMultiplier} /></td>
