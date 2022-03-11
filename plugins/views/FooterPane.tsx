@@ -13,6 +13,10 @@ const FooterBar = styled.div`
     border-top: 1px solid ${dfstyles.colors.border};
 `;
 
+const Link = styled.a`
+    float: right;
+`
+
 function WithdrawButton({disabled}) {
     if (disabled) {
         return null;
@@ -45,6 +49,7 @@ export function FooterPane() {
     return (
         <FooterBar>
             {`Balance: ${utils.formatEther(balance)}xDai `}<WithdrawButton disabled={balance == 0}/>
+            <Link href="https://darksea.market" target="_blank">darksea.market</Link>
         </FooterBar>
     );
 }
