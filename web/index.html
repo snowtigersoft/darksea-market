@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Buy and sell artifacts in Dark Forest with the DarkSea Market" />
+    <meta property="og:title" content="DarkSea Market" />
+    <!-- 70 char max for twitter -->
+    <meta property="og:url" content="https://darksea.market" />
+    <meta
+      property="og:image"
+      content="https://darksea.market/market.png"
+    />
+    <meta
+      property="image"
+      content="https://darksea.market/market.png"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@snowtigersoft" />
+    <meta name="twitter:title" content="DarkSea Market" />
+    <meta
+      name="twitter:description"
+      content="Buy and sell artifacts in Dark Forest"
+    />
+    <meta
+      name="twitter:image"
+      content="https://darkforest.market/artifact-market.png"
+    />
+    <!-- Size: The recommended size for an OG Image is 1.91:1. The recommended pixel dimensions are 1200:630 -->
+    <meta
+      property="og:description"
+      content="Buy and sell artifacts from Dark Forest with the DarkSea Market"
+    />
+    <title>DarkSea Market</title>
+
+    <link rel="stylesheet" href="dark-forest.css" />
+    <link rel="stylesheet" href="darksea-market.css" />
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8H6FGHHT8M"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-8H6FGHHT8M');
+    </script>
+  </head>
+  <body>
+    <main>
+      <h1>DarkSea Market</h1>
+      <p class="text-muted">
+        Buy and sell artifacts in
+        <a href="https://zkga.me" target="_blank" class="text-dfblue"
+          >Dark Forest</a
+        >
+        with the <span class="text">DarkSea Market</span> plugin
+      </p>
+
+      <div class="divider"></div>
+
+      <img src="darksea-market.png" title="Darksea Market" />
+
+      <div class="divider"></div>
+
+      <h2>Installation</h2>
+      <p class="text-muted">Create a new plugin and add the following code:</p>
+      <p class="code">
+        <span class="text-dfmythic">export</span> { default }
+        <span class="text-dfmythic">from</span>
+        <span class="text-dfrare text-break"
+          >"https://darksea.market/plugin.js"</span
+        >
+      </p>
+
+      <div class="divider"></div>
+
+      <h2>Features</h2>
+      <ul class="text-muted">
+        <li>Buy/Sell your artifacts on the marketplace</li>
+        <li>Create offer to buy artifacts in batch</li>
+        <li>Sort artifacts by name, property values, and price</li>
+      </ul>
+
+      <div class="divider"></div>
+
+      <h2>Resources</h2>
+      <ul class="text-muted">
+        <li>
+          contract
+          <a
+            href="https://blockscout.com/xdai/mainnet/address/0x4F3Dce4014f804c313d9c28B513C99e40316Bd11"
+            class="text-dfblue"
+            target="_blank"
+            ><span class="text-break"
+              >0x4F3Dce4014f804c313d9c28B513C99e40316Bd11</span
+            ></a
+          >
+        </li>
+        <li>
+          github
+          <a
+            href="https://github.com/snowtigersoft/darksea-market"
+            class="text-dfblue"
+            target="_blank"
+            >github.com/snowtigersoft/darksea-market</a
+          >
+        </li>
+        <li>
+          issues
+          <a
+            href="https://github.com/snowtigersoft/darksea-market/issues"
+            class="text-dfblue"
+            target="_blank"
+            >github.com/snowtigersoft/darksea-market/issues</a
+          >
+        </li>
+        <li>
+          twitter
+          <a
+            href="https://twitter.com/snowtigersoft"
+            class="text-dfblue"
+            target="_blank"
+            >twitter.com/snowtigersoft</a
+          >
+        </li>
+      </ul>
+
+      <div class="divider"></div>
+
+      <h2 class="text-dfyellow">Warning</h2>
+      <p class="text-muted">
+        The smart contract written for this marketplace has not been audited,
+        use at your own risk.
+      </p>
+
+      <br />
+
+      <h2 class="text-dfred">Danger</h2>
+      <p class="text-muted">
+        Plugins are evaluated in the context of your game and can access all of
+        your private information (including private key!). Plugins can
+        dynamically load data, which can be switched out from under you!!! Use
+        these plugins at your own risk.
+      </p>
+      <br />
+      <p class="text-muted">
+        You should not use any plugins that you haven't written yourself or by
+        someone you trust completely. You or someone you trust should control
+        the entire pipeline (such as imported dependencies) and should review
+        plugins before you use them.
+      </p>
+    </main>
+  </body>
+</html>

@@ -5,12 +5,12 @@
     "private": true,
     "files": [],
     "engines": {
-        "node": "^14"
+        "node": "^16"
     },
     "scripts": {
         "format": "prettier --write .",
         "start": "df-plugin-dev-server --glob plugins/*.tsx",
-        "build": "df-plugin-dev-server bundle --glob plugins/*.tsx --outdir=dest"
+        "build": "df-plugin-dev-server bundle --glob plugins/*.tsx --outdir=/var/www/html"
     },
     "dependencies": {
         "@darkforest_eth/network": "^6.5.5",
