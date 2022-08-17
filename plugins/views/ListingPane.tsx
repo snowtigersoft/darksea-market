@@ -10,6 +10,7 @@ import { ArtifactDetail } from "../components/ArtifactDetail";
 import { own } from "../contants";
 import { Loading } from "../components/Loading";
 import { SortableHeader } from "../components/SortableHeader";
+import { useContract, useListingArtifacts } from "../helpers/AppHooks";
 
 const PriceCell = styled.div`
   text-align: right;
@@ -18,13 +19,12 @@ const PriceCell = styled.div`
 
 const defaultSort = [{key: 'rarity', d: -1}, {key: 'price', d: 1}];
 
-export function ListingPane({selected, artifacts, loading, mine}) {
-    if (!selected) {
-        return null;
-    }
-
+export function ListingPane({mine}) {
     const [active, setActive] = useState(undefined);
     const [sort, setSort] = useState(defaultSort);
+    const { market } = useContract();
+    const { listingArtifacts, loading } = useListingArtifacts(market, 60000);
+    const artifacts = listingArtifacts.value || [];
     
     const artifactChildren = artifacts.filter((artifact) => {
         return (artifact.owner === own && mine) || !mine
@@ -42,7 +42,7 @@ export function ListingPane({selected, artifacts, loading, mine}) {
         if (active && active.id == artifact.id) {
             rows.push(<tr key={artifact.id + "a"}>
                 <td colSpan="8">
-                    <ArtifactDetail artifact={artifact} onCancel={() => setActive(false)} />
+                    <ArtifactDetail artifact={artifact} onCancel={() => setActive(false)} offer={false}/>
                 </td>
             </tr>)
         }

@@ -4,20 +4,24 @@ import { ArtifactDetail } from "../components/ArtifactDetail";
 import { listStyle, table, textCenter, warning } from "../helpers/styles";
 import { Btn } from "../components/Btn";
 import { sortByKey } from "../helpers/helpers";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useMyArtifactsList } from "../helpers/AppHooks";
 import { SortableHeader } from "../components/SortableHeader";
 import { Beware } from "../components/Beware";
 
 const defaultSort = [{key: 'rarity', d: -1}];
 
-export function InventoryPane({ selected }) {
-    if (!selected) {
-        return null;
-    }
+export function InventoryPane() {
     const [active, setActive] = useState(undefined);
     const [sort, setSort] = useState(defaultSort);
     const my_artifacts = useMyArtifactsList();
+
+    useEffect(() => {
+        return () => {
+            setActive(undefined);
+            setSort(defaultSort);
+        }
+    }, [])
 
     let artifactChildren = my_artifacts.filter(artifact => {
         return artifact.artifactType < 10 && !artifact.onPlanetId
@@ -34,7 +38,7 @@ export function InventoryPane({ selected }) {
         if (active && active.id == artifact.id) {
             rows.push(<tr key={artifact.id + "a"}>
                 <td colSpan="7">
-                    <ArtifactDetail artifact={artifact} onCancel={() => setActive(false)} />
+                    <ArtifactDetail artifact={artifact} onCancel={() => setActive(false)} offer={false} />
                 </td>
             </tr>)
         }

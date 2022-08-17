@@ -4,9 +4,8 @@ import { _ } from "lodash";
 import { Upgrade } from "@darkforest_eth/types";
 
 export async function getMarketContract() {
-    const abi = await fetch(MARKET_CONTRACT_ABI).then(res => res.json())
     //@ts-expect-error
-    return df.loadContract(MARKET_CONTRACT_ADDRESS, abi);
+    return df.loadContract(MARKET_CONTRACT_ADDRESS, MARKET_CONTRACT_ABI);
 }
 
 export async function getTokenContract() {
@@ -25,7 +24,7 @@ export async function getAllOffers(contract) {
 }
 
 export function notify(msg) {
-    notifyManager.notify(1, `[DarkSeaMarket] ${msg}`);
+    notifyManager.notify(100, `[DarkSeaMarket] ${msg}`);
 }
 
 export function getRandomActionId() {
@@ -36,19 +35,19 @@ export function getRandomActionId() {
         ret += hex[Math.floor(hex.length * Math.random())];
     }
     return ret;
-};
+}
 
 async function checkAndApprove() {
     return new Promise((resolve, reject) => {
         const name = `darksae-approved-${TOKENS_CONTRACT_ADDRESS}-${MARKET_CONTRACT_ADDRESS}-${own}`;
         const approve = window[name];
         if (!approve) {
-            console.log('[DarkSeaMarket] checking Approve');
+            log('checking Approve', 'info');
             getTokenContract().then(async (contract) => {
                 let a = await contract.isApprovedForAll(own, MARKET_CONTRACT_ADDRESS);
                 let retry = 1;
                 while(!a && retry <= 3) {
-                    console.log(`[DarkSeaMarket] call setApprove ${retry}`);
+                    log(`call setApprove ${retry}`, 'info');
                     await contract.setApprovalForAll(MARKET_CONTRACT_ADDRESS, true);
                     a = await contract.isApprovedForAll(own, MARKET_CONTRACT_ADDRESS);
                     retry++;
@@ -61,7 +60,7 @@ async function checkAndApprove() {
                 }
             }).then(() => {
                 window[name] = true;
-                console.log('[DarkSeaMarket] Approved');
+                log('Approved', 'info');
                 resolve(true);
             }).catch((err) => {
                 reject(err);
@@ -70,10 +69,6 @@ async function checkAndApprove() {
             resolve(true);
         }
     });
-}
-
-function gweiToWei(gwei: number): BigNumber {
-    return utils.parseUnits(gwei + '', 'gwei');
 }
   
 export async function callAction(contract, methodName, args, overrids = {
@@ -147,4 +142,21 @@ export function sortByKey(sorts) {
         return ret;
     }
     return doSort;
+}
+
+export function log(msg, level, ...optionalParams: any[]) {
+    switch (level) {
+        case "debug":
+            console.debug(`[${ new Date()}][DarkDeaMarket] ${msg}`, ...optionalParams);
+            break;
+        case "info":
+            console.info(`[${ new Date()}][DarkDeaMarket] ${msg}`, ...optionalParams);
+            break;
+        case "warn":
+            console.warn(`[${ new Date()}][DarkDeaMarket] ${msg}`, ...optionalParams);
+            break;
+        case "error":
+            console.error(`[${ new Date()}][DarkDeaMarket] ${msg}`, ...optionalParams);
+            break;
+    }
 }

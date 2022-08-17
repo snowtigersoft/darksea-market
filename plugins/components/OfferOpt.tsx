@@ -30,7 +30,7 @@ export function OfferOpt({ artifact, onCancel, offer }) {
                     setShow(false);
                 }).catch((err) => {
                     console.error(err);
-                    notifyManager.txInitError(methodName, err);
+                    notifyManager.txInitError(methodName, err.message);
                 }).finally(() => {
                     setProcessing(false);
                 });

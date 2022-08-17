@@ -11,8 +11,9 @@ import { useCallback, useEffect, useMemo, useState, useContext } from 'react';
 import { ListingArtifact, OfferArtifact } from './types';
 import { MARKET_CONTRACT_ADDRESS, TOKENS_CONTRACT_ADDRESS, own } from '../contants';
 import { ContractContext } from "./ContractContext";
-import { getAllArtifacts, getAllOffers, notify } from './helpers';
+import { getAllArtifacts, getAllOffers, notify, log } from './helpers';
 import { artifactIdFromEthersBN } from '@darkforest_eth/serde';
+import { utils } from 'ethers';
 
 
 /**
@@ -47,9 +48,14 @@ export function usePoll(
         if (execFirst) cb();
 
         if (!poll) return;
-        const interval = setInterval(cb, poll);
+        const interval = setInterval(() => cb(), poll);
 
-        return () => clearInterval(interval);
+        log(`Interval ${interval} created`, 'debug');
+
+        return () => {
+            log(`Interval ${interval} cleared`, 'debug');
+            clearInterval(interval)
+        };
     }, [poll, cb, execFirst]);
 }
 
@@ -65,7 +71,7 @@ export function useMyArtifacts(): Wrapper<Artifact[]> {
             setMyArtifacts(new Wrapper(df.getMyArtifactMap()));
         }, 1000);
         return () => clearInterval(interval);
-    });
+    }, []);
 
     return myArtifacts;
 }
@@ -117,15 +123,15 @@ export function useListingArtifacts(market, poll: number | undefined = undefined
     }
 
     async function onListingChange(token, listId) {
-        console.log("[DarkSeaMarket] On listing change");
+        log("On listing change", 'info');
         const item = await market.getItem(TOKENS_CONTRACT_ADDRESS, listId);
         const artifact = buildArfifact({item: item});
         if (new Date().getTime() - lastRefreshTime > 1000) {
             load();
         }
-        console.log(`[DarkSeaMarket] Artifact ${artifact.id} update`);
+        log(`Artifact ${artifact.id} update`, 'info');
         if (artifact.owner === own || artifact.buyer === own) {
-            console.log(`[DarkSeaMarket] Update local game`)
+            log(`Update local game`, 'info')
             //@ts-expect-error
             df.contractsAPI.emit('ArtifactUpdate', artifact.tokenID);
             //@ts-expect-error
@@ -142,13 +148,13 @@ export function useListingArtifacts(market, poll: number | undefined = undefined
                 notify(`You bought a ${rarity} ${artifactType}`);
             }
         }
-        console.log("[DarkSeaMarket] Success");
+        log("Success", 'info');
         return artifact;
     }
 
     const load = useCallback(async function load() {
         try {
-            console.log("[DarkSeaMarket] Loading listing artifacts");
+            log("Loading listing artifacts", 'debug');
             setLastRefreshTime(new Date().getTime());
             let artifacts = await getAllArtifacts(market);
             //@ts-expect-error
@@ -157,14 +163,14 @@ export function useListingArtifacts(market, poll: number | undefined = undefined
             afs.forEach(a=>gas[a.id]=a);
             artifacts = artifacts.map(item => buildArfifact({item: item, artifact: gas[artifactIdFromEthersBN(item.tokenID)]}))
             setListingArtifacts(new Wrapper(artifacts));
-            setLoading(false);
-            console.info("[DarkSeaMarket] Loading listing artifacts success");
+            log("Loading listing artifacts success", 'debug');
         } catch (e) {
-            console.log('[DarkSeaMarket] error loading listing artifacts', e);
-            setLoading(false);
+            log('error loading listing artifacts', 'error', e);
             setError(e);
+        } finally {
+            setLoading(false);
         }
-    }, [listingArtifacts]);
+    }, []);
 
     useEffect(() => {
         market.on("Bought", onListingChange);
@@ -175,8 +181,12 @@ export function useListingArtifacts(market, poll: number | undefined = undefined
             market.off("Bought", onListingChange);
             market.off("Listed", onListingChange);
             market.off("Unlisted", onListingChange);
+            setLastRefreshTime(new Date().getTime());
+            setListingArtifacts(new Wrapper([]));
+            setLoading(false);
+            setError(undefined);
         };
-    }, [listingArtifacts]);
+    }, []);
     
     usePoll(load, poll, listingArtifacts.value.length == 0);
     return { listingArtifacts, loading, error };
@@ -185,32 +195,32 @@ export function useListingArtifacts(market, poll: number | undefined = undefined
 export function useOfferArtifacts(market, poll: number | undefined = undefined) {
     //const { market } = useContract();
     const [offerArtifacts, setOfferArtifacts] = useState<Wrapper<OfferArtifact[]>>(new Wrapper([]));
-    const [loadingOffer, setLoadingOffer] = useState(true);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | undefined>();
     const [lastRefreshTime, setLastRefreshTime] = useState(new Date().getTime());
 
     async function onOfferChange(token, offerId) {
-        console.log("[DarkSeaMarket] On offer change");
+        log("On offer change", 'info');
         if (new Date().getTime() - lastRefreshTime > 1000) {
             load();
         }
-        console.log("[DarkSeaMarket] Success");
+        log("Success", 'info');
     }
 
     const load = useCallback(async function load() {
         try {
-            console.log("[DarkSeaMarket] Loading offers");
+            log("Loading offers", 'debug');
             setLastRefreshTime(new Date().getTime());
             let offers = await getAllOffers(market);
             setOfferArtifacts(new Wrapper(offers));
-            setLoadingOffer(false);
-            console.info("[DarkSeaMarket] Loading offers success");
+            log("Loading offers success", 'debug');
         } catch (e) {
-            console.log('[DarkSeaMarket] error loading offers', e);
-            setLoadingOffer(false);
+            log('error loading offers', 'error', e);
             setError(e);
+        } finally {
+            setLoading(false);
         }
-    }, [offerArtifacts]);
+    }, []);
 
     useEffect(() => {
         market.on("PlacedOffer", onOfferChange);
@@ -221,34 +231,121 @@ export function useOfferArtifacts(market, poll: number | undefined = undefined) 
             market.off("PlacedOffer", onOfferChange);
             market.off("CancelOffer", onOfferChange);
             market.off("FillOffer", onOfferChange);
+            setLastRefreshTime(new Date().getTime());
+            setOfferArtifacts(new Wrapper([]));
+            setLoading(false);
+            setError(undefined);
         };
-    }, [offerArtifacts]);
+    }, []);
     
     usePoll(load, poll, offerArtifacts.value.length == 0);
-    return { offerArtifacts, loadingOffer, error };
+    return { offerArtifacts, loading, error };
 }
 
 export function useBalance() {
     const { market } = useContract();
     const [balance, setBalance] = useState(0);
 
-    async function updateBalance(token, listId) {
+    async function updateBalance() {
         setBalance(await market.getMyBalance());
     }
 
     useEffect(() => {
         market.on("Bought", updateBalance);
         market.on("FillOffer", updateBalance);
+        market.on("Withdraw", updateBalance);
 
         return () => {
             market.off("Bought", updateBalance);
             market.off("FillOffer", updateBalance);
+            market.off("Withdraw", updateBalance);
         };
     }, []);
 
     useEffect(() => {
-        market.getMyBalance().then(b => setBalance(b));    
+        market.getMyBalance().then(b => setBalance(b));
     }, []);
 
     return { balance };
+}
+
+export function useCreatorFees() {
+    const { market } = useContract();
+    const [fee, setFee] = useState(0);
+
+    const load = useCallback(async function load() {
+        try {
+            const fee = await market.getCollectionFeeBalance(TOKENS_CONTRACT_ADDRESS);
+            setFee(fee);
+        } catch (e) {
+            log('error loading creator fees', 'error', e);
+        }
+    }, []);
+
+    usePoll(load, 10000, true);
+
+    return { fee };
+}
+
+export function useInfo(market) {
+    const [isInMarket, setIsInMarket] = useState(undefined);
+    const [fee, setFee] = useState(0);
+    const [creatorFee, setCreatorFee] = useState(2);
+    const [minPrice, setMinPrice] = useState(0.1);
+    const [isMarketAdmin, setIsMarketAdmin] = useState(false);
+
+    async function FeeChanged(fee) {
+        setFee(parseInt(fee, 10)/100);
+    }
+
+    async function MinPriceChanged(token, minPrice) {
+        if (token.toLowerCase() === TOKENS_CONTRACT_ADDRESS.toLowerCase()) {
+            setMinPrice(utils.formatEther(minPrice));
+        }
+    }
+
+    async function CollectionFeeChanged(token, fee) {
+        if (token.toLowerCase() === TOKENS_CONTRACT_ADDRESS.toLowerCase()) {
+            setCreatorFee(parseInt(fee, 10)/100);
+        }
+    }
+
+    async function collectionChange(token, owner, fee, minPrice) {
+        if (token.toLowerCase() === TOKENS_CONTRACT_ADDRESS.toLowerCase()) {
+            setCreatorFee(parseInt(fee, 10)/100);
+            setMinPrice(utils.formatEther(minPrice));
+            setIsInMarket(true);
+            setIsMarketAdmin(owner.toLowerCase() === own.toLowerCase());
+        }
+    }
+
+    useEffect(() => {
+        market.on("FeeChanged", FeeChanged);
+        market.on("MinPriceChanged", MinPriceChanged);
+        market.on("CollectionFeeChanged", CollectionFeeChanged);
+        market.on("AddCollection", collectionChange);
+        market.on("EditCollection", collectionChange);
+
+        return () => {
+            market.off("FeeChanged", FeeChanged);
+            market.off("MinPriceChanged", MinPriceChanged);
+            market.off("CollectionFeeChanged", CollectionFeeChanged);
+            market.off("AddCollection", collectionChange);
+            market.off("EditCollection", collectionChange);
+        };
+    }, []);
+
+    useEffect(() => {
+        market.getFee().then(b => setFee(parseInt(b, 10)/100));
+        market.isInMarket(TOKENS_CONTRACT_ADDRESS).then((b) => {
+            if (b) {
+                market.getCollectionFee(TOKENS_CONTRACT_ADDRESS).then(b => setCreatorFee(parseInt(b, 10)/100));
+                market.getCollectionMinPrice(TOKENS_CONTRACT_ADDRESS).then(b => setMinPrice(utils.formatEther(b)));
+                market.getCollectionOwner(TOKENS_CONTRACT_ADDRESS).then(b => setIsMarketAdmin(b.toLowerCase() === own.toLowerCase()));
+            }
+            setIsInMarket(b);
+        })
+    }, []);
+
+    return { fee, creatorFee, minPrice, isInMarket, isMarketAdmin };
 }

@@ -1,5 +1,6 @@
 import { buttonStyle } from "../helpers/styles";
 import React, { FunctionComponent } from 'react';
+import {Btn} from "./Btn";
 
 type Props = {
     processing: boolean;
@@ -9,7 +10,7 @@ type Props = {
 };
 
 export const Button: FunctionComponent<Props> = ({ processing, onClick, on, off }) => {
-    return <button style={buttonStyle(processing)} onClick={onClick} disabled={processing}>
+    return <Btn style={buttonStyle(processing)} onClick={onClick} disabled={processing}>
         {processing ? on : off}
-    </button>;
+    </Btn>;
 };

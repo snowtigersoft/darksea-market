@@ -25,6 +25,7 @@ contract DarkSeaMarket is Initializable, DarkSeaMarketStorage  {
     event CollectionFeeChanged(address indexed token, uint fee);
     event MinPriceChanged(address indexed token, uint256 minPrice);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event Withdraw(address indexed owner, uint256 amount);
 
     function initialize(uint256 fee, uint256 transferFee, address owner) public initializer {
         s.paused = false;
@@ -67,6 +68,14 @@ contract DarkSeaMarket is Initializable, DarkSeaMarketStorage  {
 
     function getOwner() public view returns (address) {
         return s.owner;
+    }
+
+    function getCollectionOwner(address token) public view returns (address) {
+        return s.collections[token].owner;
+    }
+
+    function isInMarket(address token) external view returns (bool) {
+        return s.collections[token].idx > 0;
     }
 
     // list
@@ -174,6 +183,7 @@ contract DarkSeaMarket is Initializable, DarkSeaMarketStorage  {
         if (amount > 0) {
             s.funds[msg.sender] = 0;
             AddressUpgradeable.sendValue(payable(msg.sender), amount);
+            emit Withdraw(msg.sender, amount);
         }
     }
 
@@ -185,7 +195,39 @@ contract DarkSeaMarket is Initializable, DarkSeaMarketStorage  {
         return s.collections[token].minPrice;
     }
 
+    // add/edit collection
+    function _addCollection(address token, address owner, uint256 fee, uint256 minPrice) internal {
+        require(fee <= 2000, "don't be greater than 20%!");
+        s.collections[token].token = Tokens(token);
+        s.collections[token].idx = s.collectionIds.length + 1;
+        s.collections[token].owner = owner;
+        s.collections[token].fee = fee;
+        s.collections[token].minPrice = minPrice;
+        s.collections[token].paused = false;
+        s.collectionIds.push(token);
+        emit AddCollection(token, owner, fee, minPrice);
+    }
+
+    function _editCollection(address token, address owner, uint256 fee, uint256 minPrice) internal {
+        require(fee <= 2000, "don't be greater than 20%!");
+        s.collections[token].owner = owner;
+        s.collections[token].fee = fee;
+        s.collections[token].minPrice = minPrice;
+        emit EditCollection(token, owner, fee, minPrice);
+    }
+
     // collection owner functions
+    function addByOwner(address token, uint256 fee, uint256 minPrice) external tokenNotExists(token) {
+        require(minPrice >= 0.01 ether, "Min Price must greater than 0.01");
+        Tokens t = Tokens(token);
+        require(t.adminAddress() == msg.sender, "Not admin of the token");
+        _addCollection(token, msg.sender, fee, minPrice);
+    }
+
+    function editByOwner(address token, uint256 fee, uint256 minPrice) external tokenExists(token) onlyCollectionOwner(token) {
+        require(minPrice >= 0.01 ether, "Min Price must greater than 0.01");
+        _editCollection(token, msg.sender, fee, minPrice);
+    }
 
     function collectCollectionFees(address token) external tokenExists(token) onlyCollectionOwner(token) {
         require (s.collections[token].feeBalance > 0, "No fee left");
@@ -197,12 +239,6 @@ contract DarkSeaMarket is Initializable, DarkSeaMarketStorage  {
     function transferCollectionOwner(address token, address newOwner) external tokenExists(token) onlyCollectionOwner(token) {
         s.collections[token].owner = newOwner;
         emit CollectionOwnerChanged(token, newOwner);
-    }
-
-    function setCollectionFee(address token, uint256 fee) external tokenExists(token) onlyCollectionOwner(token) {
-        require(fee <= 2000, "don't be greater than 20%!");
-        s.collections[token].fee = fee;
-        emit CollectionFeeChanged(token, s.fee);
     }
 
     function getCollectionFeeBalance(address token) external view tokenExists(token) onlyCollectionOwner(token) returns (uint256) {
@@ -217,21 +253,11 @@ contract DarkSeaMarket is Initializable, DarkSeaMarketStorage  {
     
     // Add new collection to market
     function addCollection(address token, address owner, uint256 fee, uint256 minPrice) external onlyOwner tokenNotExists(token) {
-        s.collections[token].token = Tokens(token);
-        s.collections[token].idx = s.collectionIds.length + 1;
-        s.collections[token].owner = owner;
-        s.collections[token].fee = fee;
-        s.collections[token].minPrice = minPrice;
-        s.collections[token].paused = false;
-        s.collectionIds.push(token);
-        emit AddCollection(token, owner, fee, minPrice);
+        _addCollection(token, owner, fee, minPrice);
     }
 
     function editCollection(address token, address owner, uint256 fee, uint256 minPrice) external onlyOwner tokenExists(token) {
-        s.collections[token].owner = owner;
-        s.collections[token].fee = fee;
-        s.collections[token].minPrice = minPrice;
-        emit EditCollection(token, owner, fee, minPrice);
+        _editCollection(token, owner, fee, minPrice);
     }
 
     // Collect fees

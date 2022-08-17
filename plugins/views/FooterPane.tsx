@@ -1,5 +1,5 @@
 import { Button } from "../components/Button";
-import { getRandomActionId, callAction } from "../helpers/helpers";
+import { callAction } from "../helpers/helpers";
 import React, { useState } from "react";
 import { notifyManager } from "../contants";
 import { useBalance, useContract } from "../helpers/AppHooks";
@@ -13,8 +13,8 @@ const FooterBar = styled.div`
     border-top: 1px solid ${dfstyles.colors.border};
 `;
 
-const Link = styled.a`
-    float: right;
+const Support = styled.a`
+    float: right
 `
 
 function WithdrawButton({disabled}) {
@@ -34,7 +34,7 @@ function WithdrawButton({disabled}) {
             }).catch((err) => {
                 setProcessing(false);
                 console.error(err);
-                notifyManager.txInitError(methodName, err);
+                notifyManager.txInitError(methodName, err.message);
             });
         }
     }
@@ -48,8 +48,9 @@ export function FooterPane() {
 
     return (
         <FooterBar>
-            {`Balance: ${utils.formatEther(balance)}xDai `}<WithdrawButton disabled={balance == 0}/>
-            <Link href="https://darksea.market" target="_blank">darksea.market</Link>
+            {`Balance: ${utils.formatEther(balance)}xDai `}
+            <WithdrawButton disabled={balance == 0}/>
+            <Support href="https://gitcoin.co/grants/4280/dark-sea-marketplace-in-dark-forest" target="_blank">Support DarkSea</Support>
         </FooterBar>
     );
 }

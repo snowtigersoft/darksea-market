@@ -12,6 +12,7 @@ import { SortableOfferHeader } from "../components/SortableOfferHeader";
 import { CreateOffer } from "../components/CreateOffer";
 import { Beware } from "../components/Beware";
 import { CancelOffer } from "../components/CancelOffer"
+import { useContract, useOfferArtifacts } from "../helpers/AppHooks";
 
 const PriceCell = styled.div`
   text-align: right;
@@ -25,12 +26,12 @@ const centerTable = {
 
 const defaultSort = [{ key: 'rarity', d: -1 }, {key: 'price', d: -1}];
 
-export function OfferPane({ selected, offers, loading, mine }) {
-  if (!selected) {
-    return null;
-  }
+export function OfferPane({ mine }) {
   const [active, setActive] = useState(undefined);
   const [sort, setSort] = useState(defaultSort);
+  const { market } = useContract();
+  const { offerArtifacts, loading } = useOfferArtifacts(market, 60000);
+  const offers = offerArtifacts.value || [];
 
   const offerChildren = offers.filter((offer) => {
     return (offer.buyer.toLowerCase() === own && mine) || !mine

@@ -9,4 +9,5 @@ interface Tokens {
     function getApproved(uint256 _tokenId) external view returns (address);
     function isApprovedForAll(address _owner, address _operator) external view returns (bool);
     function getArtifact(uint256 tokenId) external view returns (DarkForestTypes.Artifact memory);
+    function adminAddress() external view returns (address);
 }

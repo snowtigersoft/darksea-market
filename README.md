@@ -18,7 +18,7 @@
 # Dark Sea Market
 DarkSea Market is a plugin which allows darkforest players to buy / sell artifacts with each other in game.
 
-DarkSea will charge some fee of each sale, currently it is 5%.  
+DarkSea will charge some fee of each sale, currently it is **5%**.  
 At least 20% of the fees will be donated to Dark Forest via Gitcoin.
 
 ## Installation
